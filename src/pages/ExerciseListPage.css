@@ -1,0 +1,21 @@
+.exercise-grid {
+  grid-template-columns: repeat(2, 1fr);
+  margin-top: 24px;
+}
+
+.connect-reminder {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+  background: var(--amber-100);
+  border: 1px solid #fcd77f;
+}
+
+@media (max-width: 760px) {
+  .exercise-grid {
+    grid-template-columns: 1fr;
+  }
+}
