@@ -98,6 +98,33 @@ export function AiRanPage() {
         <DataFlowDiagram live={live} activeStage={live ? 2 : undefined} />
       </section>
 
+      <section className="card">
+        <h2>How edge AI powers the rehab system</h2>
+        <p className="text-muted" style={{ marginTop: 0 }}>
+          The same local edge engine that gives live feedback also drives the
+          longer-term analytics pipeline:
+        </p>
+        <div className="airan__pipeline">
+          <span>Knee Sensors</span>
+          <span>→</span>
+          <span>Edge Movement Analysis</span>
+          <span>→</span>
+          <span>Session Analytics</span>
+          <span>→</span>
+          <span>Rehab History</span>
+          <span>→</span>
+          <span>Weekly Recommendation Engine</span>
+          <span>→</span>
+          <span>Calendar</span>
+        </div>
+        <ul className="airan__pipeline-notes">
+          <li>Movement inference may be executed <strong>near the patient</strong> (local edge today).</li>
+          <li>Sensor data can be processed <strong>without depending entirely on a distant cloud</strong>.</li>
+          <li>Session results are stored and <strong>synchronised for longer-term weekly analytics</strong>.</li>
+          <li>A compatible AI-RAN deployment <strong>could</strong> support scalable cellular-edge inference across many patients (conceptual).</li>
+        </ul>
+      </section>
+
       <h2 className="section-title">Three concepts</h2>
       <div className="airan__concepts">
         <ConceptCard

@@ -60,7 +60,15 @@ interface PlatformContextValue {
   activeInference: InferenceService;
   cloudAvailability: BackendAvailability;
   infrastructure: InfrastructureStatus;
+
+  // Access control (prototype): patient vs clinician role.
+  role: UserRole;
+  setRole: (r: UserRole) => void;
+  canReview: boolean;
 }
+
+/** Simple role model for access control in the prototype. */
+export type UserRole = 'patient' | 'clinician';
 
 const PlatformContext = createContext<PlatformContextValue | null>(null);
 
@@ -93,6 +101,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
 
   const sourceRef = useRef<SensorSource>(createSource('simulation'));
 
+  const [role, setRole] = useState<UserRole>('patient');
   const [inferenceMode, setInferenceMode] = useState<InferenceMode>('edge');
   const edgeRef = useRef(new LocalEdgeInferenceService());
   const cloudRef = useRef(new CloudInferenceService());
@@ -188,6 +197,9 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       activeInference,
       cloudAvailability,
       infrastructure,
+      role,
+      setRole,
+      canReview: role === 'clinician',
     }),
     [
       sensorMode,
@@ -203,6 +215,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       activeInference,
       cloudAvailability,
       infrastructure,
+      role,
     ]
   );
 

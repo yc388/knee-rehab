@@ -101,7 +101,21 @@ designed to later accept a trained time-series model with no UI changes.
 
 ---
 
+## 🗓️ Rehabilitation management (calendar · smart resistance · weekly AI)
+
+- **My Rehabilitation Schedule** (`/calendar`) — weekly & monthly calendar with completed / upcoming / missed / rest-day indicators, add/reschedule sessions, a weekly overview computed from real stored data, and click-to-launch (loads the planned reps/angle and links completion back to the calendar).
+- **Smart brace resistance (1.5–5.0 kg)** — after each session a **post-exercise questionnaire** (difficulty / pain 0–10 / discomfort) combines with measured metrics in a **configurable, clinician-approved progression protocol**. It classifies the result as **Consider Increase / Maintain / Review for Reduction** and shows a **Weight Recommendation Card** (current, proposed-or-"Pending Review", status, reason). A clinician role can approve/reject. **No invented safe-weight formula; numeric suggestions are off unless a protocol enables them; approving changes the planned app value only — never the physical brace.**
+- **Resistance Progression** (`/resistance`) — approved weight over time vs ROM / completion, with device limits enforced (1.5–5.0 kg).
+- **Weekly Rehabilitation Progress Report** (`/weekly`) — rule-based week-over-week comparison (ROM, completion, consistency, pain…), trend detection that treats small changes as measurement variation, AI-generated recommendation categories, and a **proposed next-week plan** that requires authorised approval before it touches the calendar.
+- **Role toggle** (header) — switch Patient / Clinician to gate approval actions (prototype access control).
+- **Dashboard** now surfaces: My Rehabilitation Today · Weekly Schedule · Movement Performance · Smart Resistance · Weekly AI Insights · AI-RAN / Edge status — all wired to the same patient/exercise data.
+
+### Provenance & safety
+Every value is tagged **measured / calculated / rule-based / clinician-approved / demonstration**. Demo data (a 4-week sample history with an example clinician-approved progression) is visibly labelled. Progression and exercise changes always route through review — nothing is silently prescribed or applied to hardware.
+
+> Privacy note: this prototype stores all data locally in the browser. A production system would add authentication, patient/clinician role-based access, and encryption in transit/at rest.
+
 ## 📝 Notes
-- No backend required. History is stored in `localStorage` (seeded demo data on first run; **Reset demo data** / **Clear all** on the History page).
+- No backend required. History is stored in `localStorage` (seeded demo data on first run; **Reset demo data** on History & Schedule pages).
 - Accessible design: large text/buttons, high contrast, responsive, reduced-motion support.
 ```

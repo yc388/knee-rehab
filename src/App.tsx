@@ -10,14 +10,10 @@ import { ResultsPage } from '@/pages/ResultsPage';
 import { HistoryPage } from '@/pages/HistoryPage';
 import { HistoryDetailPage } from '@/pages/HistoryDetailPage';
 import { AiRanPage } from '@/pages/AiRanPage';
+import { CalendarPage } from '@/pages/CalendarPage';
+import { ResistancePage } from '@/pages/ResistancePage';
+import { WeeklyReportPage } from '@/pages/WeeklyReportPage';
 
-/**
- * Application root. Wires the platform provider (sensor source + inference
- * backend + infrastructure status) and the route map:
- *
- *   Dashboard → Connect → Exercises → Instructions → Live Session → Results
- *   plus Exercise History and the AI-RAN & Edge Intelligence dashboard.
- */
 export default function App() {
   return (
     <PlatformProvider>
@@ -35,6 +31,9 @@ export default function App() {
               <Route path="/history" element={<HistoryPage />} />
               <Route path="/history/:sessionId" element={<HistoryDetailPage />} />
               <Route path="/ai-ran" element={<AiRanPage />} />
+              <Route path="/calendar" element={<CalendarPage />} />
+              <Route path="/resistance" element={<ResistancePage />} />
+              <Route path="/weekly" element={<WeeklyReportPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>

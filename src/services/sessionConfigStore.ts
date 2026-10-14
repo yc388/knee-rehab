@@ -28,3 +28,36 @@ export function loadSessionConfig(exerciseId: string): SessionConfig | null {
     return null;
   }
 }
+
+/**
+ * Optional link from a calendar-launched session to its scheduled-session id,
+ * so completing the exercise can mark the calendar event complete.
+ */
+const LINK_KEY = 'rehabknee.scheduledLink.v1';
+
+export function saveScheduledLink(exerciseId: string, scheduledId: string): void {
+  try {
+    sessionStorage.setItem(LINK_KEY, JSON.stringify({ exerciseId, scheduledId }));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function loadScheduledLink(exerciseId: string): string | null {
+  try {
+    const raw = sessionStorage.getItem(LINK_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { exerciseId: string; scheduledId: string };
+    return parsed.exerciseId === exerciseId ? parsed.scheduledId : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearScheduledLink(): void {
+  try {
+    sessionStorage.removeItem(LINK_KEY);
+  } catch {
+    /* ignore */
+  }
+}

@@ -1,19 +1,31 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { getExerciseById } from '@/data/exercises';
 import { defaultSessionConfig } from '@/types/exercise';
 import { usePlatform } from '@/services/PlatformProvider';
 import { useExerciseSession } from '@/hooks/useExerciseSession';
-import { loadSessionConfig } from '@/services/sessionConfigStore';
+import {
+  loadSessionConfig,
+  loadScheduledLink,
+} from '@/services/sessionConfigStore';
 import { KneeFigure } from '@/components/KneeFigure';
 import { AngleChart } from '@/components/AngleChart';
 import { MetricTile } from '@/components/MetricTile';
 import { AiAnalysisPanel } from '@/components/AiAnalysisPanel';
 import { InfraStatusBadge } from '@/components/InfraStatusBadge';
 import { LatencyComparisonPanel } from '@/components/LatencyComparisonPanel';
+import { PostSessionQuestionnaire } from '@/components/PostSessionQuestionnaire';
 import { saveSession } from '@/services/historyStore';
+import {
+  getCurrentApprovedWeight,
+  setContext,
+  addRecommendation,
+  markScheduledCompleted,
+} from '@/services/rehab/rehabStore';
+import { buildResistanceRecommendation } from '@/services/rehab/resistanceReview';
 import { formatClock } from '@/utils/format';
 import type { InferenceMode } from '@/types/analysis';
+import type { PatientReport } from '@/types/rehab';
 import './LiveSessionPage.css';
 
 /** Live Exercise session — overview, live monitoring, edge-AI analysis, controls. */
@@ -59,15 +71,38 @@ function LiveSession({
   const { state, summary, start, pause, resume, end, reset, isConnected } =
     useExerciseSession(exercise, config);
   const savedRef = useRef(false);
+  const [showQuiz, setShowQuiz] = useState(false);
 
-  // Persist + navigate to results when finished.
+  // When session finishes → save, then show questionnaire before navigating.
   useEffect(() => {
     if (summary && !savedRef.current) {
       savedRef.current = true;
       saveSession(summary);
-      navigate(`/results/${summary.id}`, { replace: true });
+      setShowQuiz(true);
     }
-  }, [summary, navigate]);
+  }, [summary]);
+
+  const handleReport = (report: PatientReport | null) => {
+    if (!summary) return;
+    const weight = getCurrentApprovedWeight();
+    const rec = buildResistanceRecommendation({
+      session: summary,
+      report,
+      currentKg: weight.kg,
+      dataReliable: true,
+    });
+    addRecommendation(rec);
+    setContext(summary.id, {
+      weightKg: weight.kg,
+      report,
+      recommendation: rec,
+    });
+    // Link to scheduled session if one was set.
+    const schedId = loadScheduledLink(exercise.id);
+    if (schedId) markScheduledCompleted(schedId, summary.id);
+    setShowQuiz(false);
+    navigate(`/results/${summary.id}`, { replace: true });
+  };
 
   const { analysis } = state;
   const progress = Math.min(analysis.reps / config.targetReps, 1);
@@ -234,6 +269,13 @@ function LiveSession({
         feedback is derived from live knee-angle data only (no posture or
         balance inference). · {connectionLabel}
       </p>
+
+      {showQuiz && (
+        <PostSessionQuestionnaire
+          onSubmit={(report) => handleReport(report)}
+          onSkip={() => handleReport(null)}
+        />
+      )}
     </div>
   );
 }
