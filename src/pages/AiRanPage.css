@@ -1,0 +1,94 @@
+.airan__hero {
+  margin-bottom: 24px;
+}
+
+.airan__concepts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.concept-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.concept-card__icon {
+  font-size: 2.4rem;
+}
+.concept-card h3 {
+  margin: 0;
+}
+.concept-card p {
+  margin: 0;
+  color: var(--slate-600, #475569);
+}
+
+.airan__tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.airan__tabs button {
+  border: 2px solid var(--slate-200);
+  background: var(--white);
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-weight: 700;
+  color: var(--slate-600, #475569);
+  cursor: pointer;
+}
+.airan__tabs button.is-active {
+  border-color: var(--teal-600);
+  background: var(--teal-50);
+  color: var(--teal-700);
+}
+
+.airan__simtag {
+  background: var(--amber-100);
+  color: var(--amber-500);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.airan__scenario dl {
+  margin: 0;
+}
+.airan__row {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--slate-100);
+}
+.airan__row:last-child {
+  border-bottom: none;
+}
+.airan__row dt {
+  font-weight: 800;
+  color: var(--slate-700);
+}
+.airan__row dd {
+  margin: 0;
+  color: var(--slate-600, #475569);
+}
+
+.airan__note ul {
+  margin: 0 0 12px;
+  padding-left: 20px;
+}
+.airan__note li {
+  margin-bottom: 8px;
+}
+
+@media (max-width: 760px) {
+  .airan__concepts {
+    grid-template-columns: 1fr;
+  }
+  .airan__row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}

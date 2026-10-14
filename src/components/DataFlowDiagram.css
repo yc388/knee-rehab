@@ -1,0 +1,85 @@
+.flow {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 0;
+}
+
+.flow__node-wrap {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 150px;
+}
+
+.flow__node {
+  flex: 1;
+  background: var(--white);
+  border: 2px solid var(--slate-200);
+  border-radius: var(--radius);
+  padding: 16px 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+.flow__node.is-active {
+  border-color: var(--teal-500);
+  background: var(--teal-50);
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+.flow__icon {
+  font-size: 2rem;
+}
+.flow__label {
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+.flow__sub {
+  font-size: 0.78rem;
+  color: var(--slate-500);
+}
+
+.flow__connector {
+  padding: 0 6px;
+  color: var(--slate-400);
+}
+.flow__arrow {
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+.flow--live .flow__arrow {
+  color: var(--teal-500);
+  animation: flowpulse 1.2s ease-in-out infinite;
+}
+
+@keyframes flowpulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: translateX(-2px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(2px);
+  }
+}
+
+@media (max-width: 760px) {
+  .flow {
+    flex-direction: column;
+  }
+  .flow__node-wrap {
+    flex-direction: column;
+    width: 100%;
+  }
+  .flow__connector {
+    padding: 4px 0;
+  }
+  .flow__arrow {
+    transform: rotate(90deg);
+    display: inline-block;
+  }
+}

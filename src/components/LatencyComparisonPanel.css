@@ -1,0 +1,131 @@
+.latency-panel {
+  background: var(--white);
+  border: 1px solid var(--slate-100);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  box-shadow: var(--shadow-sm);
+}
+
+.latency-panel__head {
+  margin-bottom: 16px;
+}
+.latency-panel__head h3 {
+  margin: 0;
+}
+.latency-panel__sub {
+  color: var(--slate-500);
+  font-size: 0.9rem;
+}
+
+.latency-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.latency-col {
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius);
+  padding: 16px;
+  background: var(--slate-50);
+}
+.latency-col--sim {
+  border-style: dashed;
+}
+
+.latency-col__title {
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.latency-col__tag {
+  margin-left: auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--amber-100);
+  color: var(--amber-500);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.latency-col__big {
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--teal-700);
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  margin-bottom: 12px;
+}
+.latency-col__biglabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--slate-500);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.latency-col__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.latency-col__list li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  color: var(--slate-600, #475569);
+}
+
+.latency-col__avail {
+  margin-top: 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 8px;
+  text-align: center;
+}
+.latency-col__avail--available {
+  background: var(--green-100);
+  color: var(--green-500);
+}
+.latency-col__avail--unavailable {
+  background: var(--slate-100);
+  color: var(--slate-500);
+}
+.latency-col__avail--checking {
+  background: var(--amber-100);
+  color: var(--amber-500);
+}
+
+.latency-meta {
+  display: flex;
+  gap: 32px;
+  margin: 18px 0 0;
+  flex-wrap: wrap;
+}
+.latency-meta dt {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--slate-400);
+  font-weight: 700;
+}
+.latency-meta dd {
+  margin: 2px 0 0;
+  font-weight: 700;
+}
+
+@media (max-width: 560px) {
+  .latency-grid {
+    grid-template-columns: 1fr;
+  }
+}
