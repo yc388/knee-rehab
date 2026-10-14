@@ -2,6 +2,35 @@
   margin-bottom: 24px;
 }
 
+.airan__pipeline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+}
+.airan__pipeline span:not(:nth-child(even)) {
+  background: var(--teal-50);
+  border: 1px solid var(--teal-100);
+  color: var(--teal-700);
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+.airan__pipeline span:nth-child(even) {
+  color: var(--slate-400);
+  font-weight: 800;
+}
+.airan__pipeline-notes {
+  margin: 10px 0 0;
+  padding-left: 20px;
+  color: var(--slate-600, #475569);
+}
+.airan__pipeline-notes li {
+  margin-bottom: 6px;
+}
+
 .airan__concepts {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
