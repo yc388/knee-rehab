@@ -71,6 +71,35 @@
   color: var(--teal-700);
 }
 
+.rep-legend {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: var(--slate-500);
+  font-weight: 600;
+}
+.rep-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.rep-legend i {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.results-scorenote {
+  margin-top: 24px;
+  font-size: 0.92rem;
+  background: var(--slate-50);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+}
+
 .results-actions {
   display: flex;
   gap: 14px;

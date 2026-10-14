@@ -246,7 +246,8 @@ button {
   background: var(--slate-100);
   color: var(--slate-500);
 }
-.status--connecting {
+.status--connecting,
+.status--reconnecting {
   background: var(--amber-100);
   color: var(--amber-500);
 }
@@ -262,7 +263,8 @@ button {
   background: currentColor;
 }
 
-.status--connecting .status__dot {
+.status--connecting .status__dot,
+.status--reconnecting .status__dot {
   animation: pulse 1s ease-in-out infinite;
 }
 

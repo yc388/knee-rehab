@@ -8,6 +8,7 @@ const LABELS: Record<BraceConnectionState, string> = {
   connected: 'Brace Connected',
   disconnected: 'Brace Disconnected',
   connecting: 'Connecting…',
+  reconnecting: 'Reconnecting…',
   error: 'Connection Error',
 };
 

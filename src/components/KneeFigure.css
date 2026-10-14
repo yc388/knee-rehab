@@ -1,0 +1,52 @@
+.knee-figure {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+.knee-figure__thigh,
+.knee-figure__shank {
+  stroke: var(--slate-700);
+  stroke-width: 16;
+  stroke-linecap: round;
+}
+
+.knee-figure__shank {
+  stroke: var(--teal-600);
+  transition: all 0.08s linear;
+}
+
+.knee-figure__hip,
+.knee-figure__foot {
+  fill: var(--slate-700);
+}
+
+.knee-figure__brace {
+  fill: var(--teal-100);
+  stroke: var(--teal-500);
+  stroke-width: 3;
+}
+
+.knee-figure__knee {
+  fill: var(--teal-600);
+}
+
+.knee-figure__ghost line {
+  stroke: var(--slate-300, #cbd5e1);
+  stroke-width: 14;
+  stroke-linecap: round;
+  stroke-dasharray: 4 8;
+  opacity: 0.6;
+}
+.knee-figure__ghost circle {
+  fill: var(--slate-300, #cbd5e1);
+  opacity: 0.6;
+}
+
+.knee-figure__label {
+  font-size: 20px;
+  font-weight: 800;
+  fill: var(--teal-700);
+}

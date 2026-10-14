@@ -1,11 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useSensor } from '@/services/SensorProvider';
+import { usePlatform } from '@/services/PlatformProvider';
 import { ConnectionStatus } from '@/components/ConnectionStatus';
 import './AppHeader.css';
 
 /** Top navigation bar with brand, links and live connection status. */
 export function AppHeader() {
-  const { connectionState } = useSensor();
+  const { connectionState } = usePlatform();
   const { pathname } = useLocation();
 
   const isActive = (path: string) =>
@@ -31,16 +31,18 @@ export function AppHeader() {
           >
             Exercises
           </Link>
-          <Link
-            to="/history"
-            className={isActive('/history') ? 'is-active' : ''}
-          >
+          <Link to="/history" className={isActive('/history') ? 'is-active' : ''}>
             History
+          </Link>
+          <Link to="/ai-ran" className={isActive('/ai-ran') ? 'is-active' : ''}>
+            AI-RAN
           </Link>
         </nav>
 
         <div className="app-header__status">
-          <ConnectionStatus state={connectionState} />
+          <Link to="/connect" className="app-header__connect">
+            <ConnectionStatus state={connectionState} />
+          </Link>
         </div>
       </div>
     </header>

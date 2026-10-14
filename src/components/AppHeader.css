@@ -63,6 +63,10 @@
   margin-left: auto;
 }
 
+.app-header__connect {
+  text-decoration: none;
+}
+
 @media (max-width: 640px) {
   .app-header__status {
     margin-left: 0;

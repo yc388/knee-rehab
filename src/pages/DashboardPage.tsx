@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useSensor } from '@/services/SensorProvider';
+import { usePlatform } from '@/services/PlatformProvider';
 import { ConnectionStatus } from '@/components/ConnectionStatus';
+import { InfraStatusBadge } from '@/components/InfraStatusBadge';
 import { MetricTile } from '@/components/MetricTile';
 import { getSessions } from '@/services/historyStore';
 import { formatDuration, formatShortDate } from '@/utils/format';
@@ -9,9 +10,8 @@ import './DashboardPage.css';
 
 /** Home dashboard: connection, today's progress, recent sessions, start CTA. */
 export function DashboardPage() {
-  const { connectionState, isConnected, connect } = useSensor();
+  const { connectionState, isConnected, infrastructure } = usePlatform();
   const navigate = useNavigate();
-  const connecting = connectionState === 'connecting';
 
   const sessions = useMemo(() => getSessions(), []);
 
@@ -38,24 +38,20 @@ export function DashboardPage() {
           <p className="dashboard-hero__eyebrow">Welcome back</p>
           <h1>Let's work on your knee today</h1>
           <p className="text-muted">
-            A calm, guided way to track your rehabilitation exercises with your
-            smart knee brace.
+            An intelligent rehabilitation monitor with live sensor connectivity
+            and edge-AI movement analysis.
           </p>
           <div className="row row--wrap" style={{ marginTop: 8 }}>
             <ConnectionStatus state={connectionState} />
+            <InfraStatusBadge status={infrastructure} />
           </div>
         </div>
         <div className="dashboard-hero__actions">
           <button
             className="btn btn--primary btn--xl btn--block"
-            onClick={() => connect()}
-            disabled={isConnected || connecting}
+            onClick={() => navigate('/connect')}
           >
-            {isConnected
-              ? '✓ Brace Connected'
-              : connecting
-                ? 'Connecting…'
-                : '🔗 Connect Knee Brace'}
+            {isConnected ? '✓ Brace Connected · Manage' : '🔗 Connect Knee Brace'}
           </button>
           <button
             className="btn btn--secondary btn--xl btn--block"
@@ -68,21 +64,13 @@ export function DashboardPage() {
 
       <h2 className="section-title">Today's progress</h2>
       <div className="grid dashboard-stats">
-        <MetricTile
-          label="Exercises completed"
-          value={today.count}
-          icon="✅"
-        />
+        <MetricTile label="Exercises completed" value={today.count} icon="✅" />
         <MetricTile
           label="Total exercise time"
           value={today.totalMs > 0 ? formatDuration(today.totalMs) : '0 sec'}
           icon="⏱️"
         />
-        <MetricTile
-          label="All-time sessions"
-          value={sessions.length}
-          icon="📈"
-        />
+        <MetricTile label="All-time sessions" value={sessions.length} icon="📈" />
       </div>
 
       <div className="row row--between" style={{ marginTop: 36 }}>
@@ -118,8 +106,9 @@ export function DashboardPage() {
       )}
 
       <p className="disclaimer">
-        ReHabKnee is a rehabilitation exercise monitoring prototype. It does not
-        provide medical diagnosis or advice. Always follow the guidance of your
+        ReHabKnee is a rehabilitation exercise monitoring prototype. Movement
+        scores are custom indicators, not clinical diagnoses or validated
+        rehabilitation measures. Always follow the guidance of your
         physiotherapist or clinician.
       </p>
     </div>

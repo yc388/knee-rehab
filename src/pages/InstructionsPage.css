@@ -49,6 +49,48 @@
   font-weight: 600;
 }
 
+.illustration-wrap {
+  background: var(--slate-50);
+  border: 1px solid var(--slate-100);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin: 20px 0;
+  text-align: center;
+}
+.illustration-caption {
+  display: block;
+  margin-top: 8px;
+  color: var(--slate-400);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.config-card {
+  margin-top: 20px;
+}
+.config-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.config-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 700;
+}
+.config-field input[type='range'] {
+  width: 100%;
+  accent-color: var(--teal-600);
+  height: 6px;
+}
+
+@media (max-width: 640px) {
+  .config-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .instructions-steps ol {
   margin: 0;
   padding-left: 0;
