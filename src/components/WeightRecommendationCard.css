@@ -1,0 +1,146 @@
+.wrec {
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  border: 2px solid var(--slate-200);
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+.wrec--consider-increase {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+.wrec--maintain {
+  border-color: var(--teal-100);
+  background: var(--teal-50);
+}
+.wrec--review-reduce {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.wrec__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.wrec__head h3 {
+  margin: 0;
+}
+.wrec__provenance {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: var(--slate-500);
+  background: var(--white);
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--slate-200);
+}
+
+.wrec__headline {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 12px 0 18px;
+}
+
+.wrec__weights {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+.wrec__weight {
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius);
+  padding: 12px 18px;
+  flex: 1;
+}
+.wrec__wlabel {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--slate-400);
+  font-weight: 700;
+}
+.wrec__wval {
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--slate-900);
+}
+.wrec__arrow {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--slate-400);
+}
+
+.wrec__meta {
+  display: flex;
+  gap: 32px;
+  margin: 0 0 16px;
+  flex-wrap: wrap;
+}
+.wrec__meta dt {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--slate-400);
+  font-weight: 700;
+}
+.wrec__meta dd {
+  margin: 2px 0 0;
+  font-weight: 800;
+}
+
+.wrec__status {
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+}
+.wrec__status--pending {
+  background: var(--amber-100);
+  color: var(--amber-500);
+}
+.wrec__status--approved {
+  background: var(--green-100);
+  color: var(--green-500);
+}
+.wrec__status--rejected {
+  background: var(--red-100);
+  color: var(--red-500);
+}
+
+.wrec__reason {
+  color: var(--slate-600, #475569);
+  margin: 0 0 10px;
+}
+.wrec__clinical {
+  background: var(--amber-100);
+  color: var(--amber-500);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 700;
+  margin: 0 0 14px;
+}
+
+.wrec__actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 560px) {
+  .wrec__weights {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .wrec__arrow {
+    transform: rotate(90deg);
+    text-align: center;
+  }
+}
