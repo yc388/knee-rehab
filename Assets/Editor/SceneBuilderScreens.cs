@@ -182,7 +182,23 @@ namespace KneeRehab.EditorTools
         {
             var panel = SceneBuilder.MakeScreenRoot("ExerciseInstruction", parent);
             var area = Header(panel, "Exercise Instructions", out var back, withBack: true);
-            var content = MakeScrollableColumn(area.transform, 12, Pad(24, 18, 24, 18));
+
+            // Reserve a fixed footer for the Start button so it never overlaps the
+            // scrolling content. The scroll column fills the area ABOVE the footer.
+            var footer = UIFactory.Node("Footer", area.transform);
+            var frt = UIFactory.Rect(footer);
+            frt.anchorMin = new Vector2(0, 0); frt.anchorMax = new Vector2(1, 0);
+            frt.pivot = new Vector2(0.5f, 0f);
+            frt.sizeDelta = new Vector2(0, 96);
+            frt.anchoredPosition = Vector2.zero;
+
+            var scrollHost = UIFactory.Node("ScrollHost", area.transform);
+            var shrt = UIFactory.Rect(scrollHost);
+            shrt.anchorMin = new Vector2(0, 0); shrt.anchorMax = new Vector2(1, 1);
+            shrt.offsetMin = new Vector2(0, 104); // sit above the footer
+            shrt.offsetMax = Vector2.zero;
+
+            var content = MakeScrollableColumn(scrollHost.transform, 12, Pad(24, 18, 24, 18));
 
             var ui = panel.AddComponent<ExerciseInstructionUI>();
             ui.backButton = back;
@@ -217,11 +233,15 @@ namespace KneeRehab.EditorTools
             UIFactory.Label("TargetLbl", pickCard.transform, "Target angle", 17, UIFactory.TextMuted, TextAlignmentOptions.Left);
             ui.targetPickerContainer = MakePickerRow(pickCard.transform, "TargetRow").transform;
 
-            var btnRow = UIFactory.Node("Buttons", content.transform);
-            UIFactory.HLayout(btnRow, 16, Pad(0, 0, 0, 0));
-            UIFactory.Size(btnRow, 76, 84);
-            ui.startButton = UIFactory.Button("Start", btnRow.transform, "Start Exercise",
+            // Start button lives in the fixed footer (created above), so it is always
+            // visible and never overlaps the scrolling content.
+            ui.startButton = UIFactory.Button("Start", footer.transform, "Start Exercise",
                 UIFactory.Good, Color.white, 28, out _);
+            var startRt = UIFactory.Rect(ui.startButton.gameObject);
+            startRt.anchorMin = new Vector2(0, 0.5f); startRt.anchorMax = new Vector2(1, 0.5f);
+            startRt.pivot = new Vector2(0.5f, 0.5f);
+            startRt.sizeDelta = new Vector2(-48, 76);
+            startRt.anchoredPosition = Vector2.zero;
 
             // Countdown overlay
             var overlay = UIFactory.Panel("CountdownOverlay", panel.transform, new Color(0, 0, 0, 0.78f));
@@ -384,7 +404,20 @@ namespace KneeRehab.EditorTools
         {
             var panel = SceneBuilder.MakeScreenRoot("ExerciseResults", parent);
             var area = Header(panel, "Performance Results", out _, withBack: false);
-            var content = MakeScrollableColumn(area.transform, 12, Pad(20, 16, 20, 16));
+
+            // Fixed footer for the nav buttons; scroll content fills the area above.
+            var footer = UIFactory.Node("Footer", area.transform);
+            var frt = UIFactory.Rect(footer);
+            frt.anchorMin = new Vector2(0, 0); frt.anchorMax = new Vector2(1, 0);
+            frt.pivot = new Vector2(0.5f, 0f); frt.sizeDelta = new Vector2(0, 96);
+            frt.anchoredPosition = Vector2.zero;
+
+            var scrollHost = UIFactory.Node("ScrollHost", area.transform);
+            var shrt = UIFactory.Rect(scrollHost);
+            shrt.anchorMin = new Vector2(0, 0); shrt.anchorMax = new Vector2(1, 1);
+            shrt.offsetMin = new Vector2(0, 104); shrt.offsetMax = Vector2.zero;
+
+            var content = MakeScrollableColumn(scrollHost.transform, 12, Pad(20, 16, 20, 16));
 
             var ui = panel.AddComponent<ResultsUI>();
 
@@ -424,9 +457,14 @@ namespace KneeRehab.EditorTools
             ui.improvementText = UIFactory.Label("Improve", content.transform, "", 21,
                 UIFactory.Primary, TextAlignmentOptions.Center);
 
-            var btnRow = UIFactory.Node("Buttons", content.transform);
+            // Nav buttons in the fixed footer.
+            var btnRow = UIFactory.Node("Buttons", footer.transform);
+            var brRt = UIFactory.Rect(btnRow);
+            brRt.anchorMin = new Vector2(0, 0.5f); brRt.anchorMax = new Vector2(1, 0.5f);
+            brRt.pivot = new Vector2(0.5f, 0.5f);
+            brRt.sizeDelta = new Vector2(-48, 76);
+            brRt.anchoredPosition = Vector2.zero;
             UIFactory.HLayout(btnRow, 16, Pad(0, 0, 0, 0));
-            UIFactory.Size(btnRow, 72, 80);
             ui.repeatButton = UIFactory.Button("Repeat", btnRow.transform, "Repeat Exercise",
                 UIFactory.Good, Color.white, 23, out _);
             ui.chooseAnotherButton = UIFactory.Button("Choose", btnRow.transform, "Choose Another",
