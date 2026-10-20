@@ -67,24 +67,27 @@ namespace KneeRehab.EditorTools
                 "Welcome back", 30, UIFactory.Text, TextAlignmentOptions.Center, FontStyles.Bold);
             UIFactory.Size(ui.welcomeText.gameObject, 40, 44);
 
-            // Connection card
+            // Connection status card (status only — the Connect button is a
+            // separate full-width element below so it can never be clipped).
             var connCard = UIFactory.RoundedPanel("ConnectionCard", content.transform, UIFactory.PanelColor);
-            UIFactory.Size(connCard, 160, 170);
-            UIFactory.VLayout(connCard, 10, Pad(20, 16, 20, 16));
-
-            var statusRow = UIFactory.Node("StatusRow", connCard.transform);
-            UIFactory.HLayout(statusRow, 12, Pad(0, 0, 0, 0));
-            UIFactory.Size(statusRow, 44, 48);
+            UIFactory.Size(connCard, 80, 90);
+            var statusRow = connCard; // use the card itself as the horizontal row
+            UIFactory.HLayout(statusRow, 14, Pad(20, 16, 20, 16));
 
             var dot = UIFactory.Panel("Dot", statusRow.transform, UIFactory.TextMuted);
-            UIFactory.Size(dot, 36, 36, 36);
+            var dotLe = UIFactory.Size(dot, 36, 36, 36);
+            dotLe.flexibleWidth = 0; // keep the dot a fixed small square
+            dotLe.preferredWidth = 36;
+
             ui.statusIndicator = dot.GetComponent<Image>();
 
             ui.statusText = UIFactory.Label("StatusText", statusRow.transform, "Brace Disconnected",
                 28, UIFactory.Text, TextAlignmentOptions.Left, FontStyles.Bold);
 
-            var connBtn = UIFactory.Button("ConnectBtn", connCard.transform, "Connect Knee Brace",
+            // Connect button — its own full-width row directly in the dashboard layout.
+            var connBtn = UIFactory.Button("ConnectBtn", content.transform, "Connect Knee Brace",
                 UIFactory.Primary, Color.white, 26, out var connLabel);
+            UIFactory.Size(connBtn.gameObject, 72, 80);
             ui.connectButton = connBtn;
             ui.connectButtonLabel = connLabel;
 
