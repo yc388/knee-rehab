@@ -53,6 +53,13 @@ namespace KneeRehab.ExerciseSystem
             "Move slowly and stop if you feel sharp pain. This app provides exercise " +
             "feedback only and is not a medical diagnosis.";
 
+        [Header("Default angles (preset-snapped; preserve motion direction)")]
+        [Tooltip("Resting / start angle shown by default (deg).")]
+        public float defaultStartAngle = 90f;
+        [Tooltip("Goal / target angle shown by default (deg). May be larger than " +
+                 "start for flexion-type exercises.")]
+        public float defaultTargetAngle = 15f;
+
         [Header("Targets")]
         [Min(1)] public int targetRepetitions = 10;
 

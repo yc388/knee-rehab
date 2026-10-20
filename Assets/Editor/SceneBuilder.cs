@@ -242,12 +242,14 @@ namespace KneeRehab.EditorTools
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.93f, 0.96f, 0.99f, 1f);
             cam.orthographic = false;
-            cam.fieldOfView = 32f;
+            cam.fieldOfView = 42f;
             cam.targetTexture = rt;
             cam.cullingMask = ~0;
-            // Look at the leg from the front, slightly above.
-            camGo.transform.position = legRoot.transform.position + new Vector3(0f, 0.1f, -4.2f);
-            camGo.transform.rotation = Quaternion.Euler(6f, 0f, 0f);
+            // Frame the whole leg: aim at the knee (~y=0), pulled back and to the
+            // side so the shin's forward swing stays in view.
+            var focus = legRoot.transform.position + new Vector3(0f, -0.1f, 0.3f);
+            camGo.transform.position = legRoot.transform.position + new Vector3(1.0f, 0.1f, -5.0f);
+            camGo.transform.LookAt(focus);
 
             // A dedicated light so the leg is lit regardless of scene lighting.
             var lightGo = new GameObject("LegLight");
@@ -328,6 +330,9 @@ namespace KneeRehab.EditorTools
             // = the goal extreme. We store the user-facing start/target into these.
             ex.targetMaximumAngle = Mathf.Max(startAngle, targetAngle);
             ex.targetMinimumAngle = Mathf.Min(startAngle, targetAngle);
+            // Preserve the intended motion direction for the default pickers.
+            ex.defaultStartAngle = startAngle;
+            ex.defaultTargetAngle = targetAngle;
             ex.estimatedSecondsPerRep = secsPerRep;
             float span = Mathf.Abs(startAngle - targetAngle);
             ex.extendedEnterThreshold = ex.targetMinimumAngle + span * 0.45f;

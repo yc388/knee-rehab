@@ -314,9 +314,18 @@ namespace KneeRehab.EditorTools
             ui.goodRepText = UIFactory.Label("Good", repsRow.transform, "0 good", 26,
                 UIFactory.Good, TextAlignmentOptions.Center, FontStyles.Bold);
 
+            // Gauge wrapper keeps the gauge a fixed SQUARE (so the circular sprite
+            // isn't stretched into an ellipse by the column's width-expansion).
+            var gaugeWrap = UIFactory.Node("GaugeWrap", left.transform);
+            var gw = UIFactory.HLayout(gaugeWrap, 0, Pad(0, 0, 0, 0));
+            gw.childForceExpandWidth = false;
+            gw.childAlignment = TextAnchor.MiddleCenter;
+            UIFactory.Size(gaugeWrap, 230, 230);
+
             // Gauge + big angle overlay
-            var gaugeGo = UIFactory.Node("Gauge", left.transform);
-            UIFactory.Size(gaugeGo, 220, 240);
+            var gaugeGo = UIFactory.Node("Gauge", gaugeWrap.transform);
+            var gaugeLe = UIFactory.Size(gaugeGo, 220, 220, 220);
+            gaugeLe.flexibleWidth = 0; gaugeLe.preferredWidth = 220;
             var gaugeBgImg = gaugeGo.AddComponent<Image>();
             gaugeBgImg.color = new Color(0.90f, 0.94f, 0.96f);
             gaugeBgImg.sprite = BuiltinKnob();
