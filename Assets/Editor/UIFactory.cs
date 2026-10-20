@@ -67,7 +67,7 @@ namespace KneeRehab.EditorTools
             t.color = color;
             t.alignment = align;
             t.fontStyle = style;
-            t.enableWordWrapping = true;
+            t.textWrappingMode = TextWrappingModes.Normal;
             return t;
         }
 
