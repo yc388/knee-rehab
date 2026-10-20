@@ -170,9 +170,6 @@ namespace KneeRehab.ExerciseSystem
 
             UpdateFeedback(data.kneeAngle);
 
-            _lastAngle = data.kneeAngle;
-            _hasLastAngle = true;
-
             SampleProcessed?.Invoke(data.kneeAngle, CurrentSpeed);
         }
 
