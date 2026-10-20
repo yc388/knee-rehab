@@ -68,7 +68,7 @@ namespace KneeRehab.EditorTools
             UIFactory.Size(ui.welcomeText.gameObject, 40, 44);
 
             // Connection card
-            var connCard = UIFactory.RoundedPanel("ConnectionCard", content.transform, UIFactory.Panel);
+            var connCard = UIFactory.RoundedPanel("ConnectionCard", content.transform, UIFactory.PanelColor);
             UIFactory.Size(connCard, 160, 170);
             UIFactory.VLayout(connCard, 10, Pad(20, 16, 20, 16));
 
@@ -162,7 +162,7 @@ namespace KneeRehab.EditorTools
                 UIFactory.Text, TextAlignmentOptions.Center, FontStyles.Bold);
             UIFactory.Size(ui.nameText.gameObject, 42, 46);
 
-            var card = UIFactory.RoundedPanel("InstrCard", content.transform, UIFactory.Panel);
+            var card = UIFactory.RoundedPanel("InstrCard", content.transform, UIFactory.PanelColor);
             UIFactory.Size(card, 240, 320);
             UIFactory.VLayout(card, 8, Pad(20, 16, 20, 16));
             ui.instructionsText = UIFactory.Label("Instructions", card.transform, "", 24, UIFactory.Text);
@@ -338,7 +338,7 @@ namespace KneeRehab.EditorTools
             ui.overallScoreText = StatInGrid(statsGrid.transform, "Overall Score");
 
             // Graph
-            var graphCard = UIFactory.Panel("GraphCard", content.transform, UIFactory.Panel);
+            var graphCard = UIFactory.Panel("GraphCard", content.transform, UIFactory.PanelColor);
             UIFactory.Size(graphCard, 180, 200);
             var graphGo = UIFactory.Node("ResultsGraph", graphCard.transform);
             UIFactory.Stretch(UIFactory.Rect(graphGo), 16);
@@ -415,7 +415,7 @@ namespace KneeRehab.EditorTools
 
             ui.romSummaryText = UIFactory.Label("RomSummary", content.transform, "Best ROM over time", 24,
                 UIFactory.Text, TextAlignmentOptions.Center, FontStyles.Bold);
-            var romCard = UIFactory.Panel("RomCard", content.transform, UIFactory.Panel);
+            var romCard = UIFactory.Panel("RomCard", content.transform, UIFactory.PanelColor);
             UIFactory.Size(romCard, 160, 200);
             var romGo = UIFactory.Node("RomGraph", romCard.transform);
             UIFactory.Stretch(UIFactory.Rect(romGo), 16);
@@ -425,7 +425,7 @@ namespace KneeRehab.EditorTools
 
             ui.scoreSummaryText = UIFactory.Label("ScoreSummary", content.transform, "Score over time", 24,
                 UIFactory.Text, TextAlignmentOptions.Center, FontStyles.Bold);
-            var scoreCard = UIFactory.Panel("ScoreCard", content.transform, UIFactory.Panel);
+            var scoreCard = UIFactory.Panel("ScoreCard", content.transform, UIFactory.PanelColor);
             UIFactory.Size(scoreCard, 160, 200);
             var scoreGo = UIFactory.Node("ScoreGraph", scoreCard.transform);
             UIFactory.Stretch(UIFactory.Rect(scoreGo), 16);
@@ -443,7 +443,7 @@ namespace KneeRehab.EditorTools
         // ===================================================================
         public static ExerciseCard BuildExerciseCardPrefab()
         {
-            var go = UIFactory.Panel("ExerciseCard", null, UIFactory.Panel);
+            var go = UIFactory.Panel("ExerciseCard", null, UIFactory.PanelColor);
             var card = go.AddComponent<ExerciseCard>();
             UIFactory.VLayout(go, 8, Pad(20, 16, 20, 16));
 
@@ -471,7 +471,7 @@ namespace KneeRehab.EditorTools
 
         public static HistoryRow BuildHistoryRowPrefab()
         {
-            var go = UIFactory.Panel("HistoryRow", null, UIFactory.Panel);
+            var go = UIFactory.Panel("HistoryRow", null, UIFactory.PanelColor);
             var row = go.AddComponent<HistoryRow>();
             var btn = go.AddComponent<Button>();
             btn.targetGraphic = go.GetComponent<Image>();

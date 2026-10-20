@@ -12,7 +12,7 @@ namespace KneeRehab.EditorTools
     public static class UIFactory
     {
         public static readonly Color Bg = new Color(0.94f, 0.96f, 0.98f);
-        public static readonly Color Panel = Color.white;
+        public static readonly Color PanelColor = Color.white;
         public static readonly Color Primary = new Color(0.16f, 0.55f, 0.72f);
         public static readonly Color PrimaryDark = new Color(0.12f, 0.42f, 0.56f);
         public static readonly Color Text = new Color(0.14f, 0.18f, 0.22f);
@@ -134,7 +134,7 @@ namespace KneeRehab.EditorTools
         public static (GameObject root, TextMeshProUGUI value) StatBlock(
             string name, Transform parent, string caption, string initial, Color accent)
         {
-            var root = RoundedPanel(name, parent, Panel);
+            var root = RoundedPanel(name, parent, PanelColor);
             VLayout(root, 2f, new RectOffset(12, 12, 12, 12));
             Size(root, 90, 100);
 
