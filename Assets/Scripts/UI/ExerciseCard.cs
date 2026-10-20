@@ -1,4 +1,5 @@
 using System;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -37,7 +38,7 @@ namespace KneeRehab.UI
             if (durationText != null)
             {
                 int secs = Mathf.RoundToInt(data.EstimatedTotalSeconds);
-                durationText.text = $"~{secs / 60}m {secs % 60}s";
+                durationText.text = secs < 60 ? $"~{secs}s" : $"~{secs / 60}m {secs % 60}s";
             }
             if (difficultyText != null) difficultyText.text = data.DifficultyLabel;
             if (iconImage != null && data.icon != null) iconImage.sprite = data.icon;

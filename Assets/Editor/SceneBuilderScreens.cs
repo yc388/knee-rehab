@@ -160,8 +160,8 @@ namespace KneeRehab.EditorTools
 
             var scroll = MakeScroll(content.transform, out var viewportContent);
             var grid = viewportContent.AddComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(560, 250);
-            grid.spacing = new Vector2(20, 20);
+            grid.cellSize = new Vector2(560, 300);
+            grid.spacing = new Vector2(24, 28);
             grid.padding = Pad(10, 10, 10, 10);
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             grid.constraintCount = 2;
