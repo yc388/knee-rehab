@@ -80,11 +80,13 @@ namespace KneeRehab.EditorTools
 
             var modeRow = UIFactory.Node("ModeRow", modeCard.transform);
             UIFactory.HLayout(modeRow, 14, Pad(0, 0, 0, 0));
-            UIFactory.Size(modeRow, 60, 66);
+            UIFactory.Size(modeRow, 60, 60);
             ui.demoModeButton = UIFactory.Button("DemoMode", modeRow.transform, "Demo Mode",
                 UIFactory.Primary, Color.white, 22, out _);
             ui.actualModeButton = UIFactory.Button("ActualMode", modeRow.transform, "Actual Connection",
                 UIFactory.Chip, UIFactory.Text, 22, out _);
+            UIFactory.Size(ui.demoModeButton.gameObject, 54, 54);
+            UIFactory.Size(ui.actualModeButton.gameObject, 54, 54);
 
             ui.modeHintText = UIFactory.Label("ModeHint", modeCard.transform,
                 "Demo Mode — using simulated sensor data.", 18, UIFactory.TextMuted,
@@ -92,16 +94,20 @@ namespace KneeRehab.EditorTools
 
             // --- Connection status + connect button ---
             var connCard = UIFactory.RoundedPanel("ConnectionCard", content.transform, UIFactory.PanelColor);
-            UIFactory.Size(connCard, 80, 86);
-            UIFactory.HLayout(connCard, 14, Pad(20, 14, 20, 14));
+            UIFactory.Size(connCard, 74, 80);
+            var connH = UIFactory.HLayout(connCard, 14, Pad(20, 14, 20, 14));
+            connH.childForceExpandWidth = false; // so the dot stays a small square
+            connH.childAlignment = TextAnchor.MiddleLeft;
 
             var dot = UIFactory.RoundedPanel("Dot", connCard.transform, UIFactory.Danger);
-            var dotLe = UIFactory.Size(dot, 34, 34, 34);
-            dotLe.flexibleWidth = 0; dotLe.preferredWidth = 34;
+            var dotLe = UIFactory.Size(dot, 30, 30, 30);
+            dotLe.flexibleWidth = 0; dotLe.preferredWidth = 30;
             ui.statusIndicator = dot.GetComponent<Image>();
 
-            ui.statusText = UIFactory.Label("StatusText", connCard.transform, "Brace Disconnected",
+            var statusTextLabel = UIFactory.Label("StatusText", connCard.transform, "Brace Disconnected",
                 28, UIFactory.Text, TextAlignmentOptions.Left, FontStyles.Bold);
+            UIFactory.Size(statusTextLabel.gameObject, 40, 40).flexibleWidth = 1;
+            ui.statusText = statusTextLabel;
 
             var connBtn = UIFactory.Button("ConnectBtn", content.transform, "Connect Knee Brace",
                 UIFactory.Primary, Color.white, 26, out var connLabel);

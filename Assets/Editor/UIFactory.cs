@@ -141,7 +141,9 @@ namespace KneeRehab.EditorTools
             v.padding = padding;
             v.childAlignment = align;
             v.childControlWidth = true;
-            v.childControlHeight = false;
+            // Control height too, so each child's LayoutElement.preferredHeight is
+            // honoured and siblings never overlap.
+            v.childControlHeight = true;
             v.childForceExpandWidth = true;
             v.childForceExpandHeight = false;
             return v;
