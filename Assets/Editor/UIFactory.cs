@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -11,13 +12,18 @@ namespace KneeRehab.EditorTools
     /// </summary>
     public static class UIFactory
     {
-        public static readonly Color Bg = new Color(0.94f, 0.96f, 0.98f);
+        // Calm, professional healthcare palette (teal + soft slate).
+        public static readonly Color Bg = new Color(0.925f, 0.945f, 0.965f);
         public static readonly Color PanelColor = Color.white;
-        public static readonly Color Primary = new Color(0.16f, 0.55f, 0.72f);
-        public static readonly Color PrimaryDark = new Color(0.12f, 0.42f, 0.56f);
-        public static readonly Color Text = new Color(0.14f, 0.18f, 0.22f);
-        public static readonly Color TextMuted = new Color(0.45f, 0.5f, 0.55f);
-        public static readonly Color Good = new Color(0.30f, 0.69f, 0.49f);
+        public static readonly Color Primary = new Color(0.106f, 0.541f, 0.643f);   // teal
+        public static readonly Color PrimaryDark = new Color(0.067f, 0.400f, 0.482f);
+        public static readonly Color Accent = new Color(0.180f, 0.690f, 0.690f);    // lighter teal
+        public static readonly Color Text = new Color(0.137f, 0.188f, 0.235f);      // deep slate
+        public static readonly Color TextMuted = new Color(0.447f, 0.498f, 0.549f);
+        public static readonly Color Good = new Color(0.180f, 0.690f, 0.490f);      // green
+        public static readonly Color Warn = new Color(0.902f, 0.553f, 0.176f);      // amber
+        public static readonly Color Danger = new Color(0.843f, 0.329f, 0.310f);    // red
+        public static readonly Color Chip = new Color(0.898f, 0.925f, 0.945f);      // unselected chip
 
         public static RectTransform Rect(GameObject go)
         {
@@ -56,11 +62,24 @@ namespace KneeRehab.EditorTools
             return go;
         }
 
+        // Unity ships a rounded UI sprite (UISprite.psd) with a 9-slice border, which
+        // gives panels/buttons soft rounded corners with no custom art.
+        private static Sprite _rounded;
+        public static Sprite RoundedSprite()
+        {
+            if (_rounded != null) return _rounded;
+            _rounded = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+            return _rounded;
+        }
+
         public static GameObject RoundedPanel(string name, Transform parent, Color color)
         {
-            // We don't ship a sprite; a flat Image reads as a clean card on the
-            // healthcare palette. Swap in a rounded sprite later if desired.
-            return Panel(name, parent, color);
+            var go = Node(name, parent);
+            var img = go.AddComponent<Image>();
+            img.color = color;
+            var sp = RoundedSprite();
+            if (sp != null) { img.sprite = sp; img.type = Image.Type.Sliced; img.pixelsPerUnitMultiplier = 2.5f; }
+            return go;
         }
 
         public static TextMeshProUGUI Label(string name, Transform parent, string text,
@@ -87,8 +106,16 @@ namespace KneeRehab.EditorTools
             var go = Node(name, parent);
             var img = go.AddComponent<Image>();
             img.color = bg;
+            var sp = RoundedSprite();
+            if (sp != null) { img.sprite = sp; img.type = Image.Type.Sliced; img.pixelsPerUnitMultiplier = 2.5f; }
             var btn = go.AddComponent<Button>();
             btn.targetGraphic = img;
+            // Subtle press/hover feedback.
+            var colors = btn.colors;
+            colors.highlightedColor = new Color(1f, 1f, 1f, 1f);
+            colors.pressedColor = new Color(0.9f, 0.9f, 0.9f, 1f);
+            colors.fadeDuration = 0.08f;
+            btn.colors = colors;
 
             var le = go.AddComponent<LayoutElement>();
             le.minHeight = 64f;

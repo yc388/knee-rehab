@@ -28,6 +28,13 @@ namespace KneeRehab.UI
         public Button connectButton;
         public TMP_Text connectButtonLabel;
 
+        [Header("Connection mode")]
+        public Button demoModeButton;        // use the simulator
+        public Button actualModeButton;      // use the real brace (network provider)
+        public TMP_Text modeHintText;        // explains the current mode
+        public Color modeSelectedColor = new Color(0.16f, 0.55f, 0.72f);
+        public Color modeUnselectedColor = new Color(0.80f, 0.85f, 0.90f);
+
         [Header("Today summary")]
         public TMP_Text todayCountText;
         public TMP_Text todayDurationText;
@@ -72,6 +79,8 @@ namespace KneeRehab.UI
         private void Start()
         {
             if (connectButton != null) connectButton.onClick.AddListener(OnConnectClicked);
+            if (demoModeButton != null) demoModeButton.onClick.AddListener(() => SetMode(SensorSourceMode.Simulated));
+            if (actualModeButton != null) actualModeButton.onClick.AddListener(() => SetMode(SensorSourceMode.Network));
             if (startExerciseButton != null)
                 startExerciseButton.onClick.AddListener(() => ScreenManager.Instance.Show(AppScreen.ExerciseSelection));
             if (historyButton != null)
@@ -95,8 +104,44 @@ namespace KneeRehab.UI
         private void OnConnectingStarted() => RefreshConnection();
         private void OnConnectionChanged(bool connected) => RefreshConnection();
 
+        private void SetMode(SensorSourceMode mode)
+        {
+            var svc = SensorService.Instance;
+            if (svc == null) return;
+            svc.SetMode(mode);
+            RefreshMode();
+            RefreshConnection();
+        }
+
+        private void RefreshMode()
+        {
+            var svc = SensorService.Instance;
+            if (svc == null) return;
+
+            bool demo = svc.Mode == SensorSourceMode.Simulated;
+            TintModeButton(demoModeButton, demo);
+            TintModeButton(actualModeButton, !demo);
+
+            if (modeHintText != null)
+            {
+                modeHintText.text = demo
+                    ? "Demo Mode — using simulated sensor data."
+                    : "Actual Connection — streaming from the knee brace (Raspberry Pi / 5G).";
+            }
+        }
+
+        private void TintModeButton(Button btn, bool selected)
+        {
+            if (btn == null) return;
+            var img = btn.GetComponent<Image>();
+            if (img != null) img.color = selected ? modeSelectedColor : modeUnselectedColor;
+            var label = btn.GetComponentInChildren<TMP_Text>();
+            if (label != null) label.color = selected ? Color.white : new Color(0.25f, 0.3f, 0.35f);
+        }
+
         private void RefreshAll()
         {
+            RefreshMode();
             RefreshConnection();
             RefreshSummary();
         }

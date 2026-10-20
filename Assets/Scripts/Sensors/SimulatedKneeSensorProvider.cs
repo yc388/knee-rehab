@@ -18,10 +18,14 @@ namespace KneeRehab.Sensors
     public class SimulatedKneeSensorProvider : IKneeSensorProvider
     {
         // ---- Configuration (set by SensorService from the current exercise) ----
-        public float StartAngle = 90f;   // seated / flexed position
-        public float ExtendedAngle = 20f; // leg nearly straight
+        public float StartAngle = 90f;   // seated / flexed (resting) position
+        public float ExtendedAngle = 20f; // the user's chosen TARGET (goal to reach)
         public float SecondsPerRep = 4f;  // 3-5s per rep as specified
         public float NoiseDegrees = 2f;   // +/- realistic sensor jitter
+
+        [Tooltip("Max degrees a rep may fall short of (or overshoot) the target, so " +
+                 "not every rep is identical. Set 0 for perfect reps.")]
+        public float PerRepVariation = 14f;
 
         // ---- State ----
         private bool _connected;
@@ -30,6 +34,10 @@ namespace KneeRehab.Sensors
         private float _prevAngle;
         private bool _hasPrev;
         private KneeSensorData _latest;
+
+        // The actual extension depth for the CURRENT rep (varies each rep for realism).
+        private float _currentRepExtended;
+        private float _currentRepSpeedScale = 1f;
 
         // Perlin-noise seeds so each axis looks independent and smooth.
         private readonly float _seedAngle;
@@ -53,8 +61,35 @@ namespace KneeRehab.Sensors
             _time = 0f;
             _phase = 0f;
             _hasPrev = false;
+            RollNextRep();
             _connected = true;
             ConnectionChanged?.Invoke(true);
+        }
+
+        /// <summary>
+        /// Choose a slightly different extension depth and speed for the next rep so
+        /// the simulated motion looks human: some reps reach the target, some fall a
+        /// little short, each at a marginally different pace.
+        /// </summary>
+        private void RollNextRep()
+        {
+            // Works for both extension (target < start) and flexion (target > start).
+            // "Short" means not reaching as far toward the target; bias slightly
+            // toward falling short (realistic fatigue), with occasional full reps.
+            bool extension = ExtendedAngle <= StartAngle;
+            float shortfall = UnityEngine.Random.Range(-PerRepVariation * 0.4f, PerRepVariation);
+
+            // For extension, falling short = a LARGER angle; for flexion = a SMALLER angle.
+            _currentRepExtended = extension
+                ? ExtendedAngle + shortfall
+                : ExtendedAngle - shortfall;
+
+            // Clamp to a sensible range between 0 and the start, keeping a small gap.
+            float lo = Mathf.Min(StartAngle, ExtendedAngle) - 3f;
+            float hi = Mathf.Max(StartAngle, ExtendedAngle) + 3f;
+            _currentRepExtended = Mathf.Clamp(_currentRepExtended, Mathf.Max(0f, lo), hi);
+
+            _currentRepSpeedScale = UnityEngine.Random.Range(0.85f, 1.2f);
         }
 
         public void Disconnect()
@@ -73,6 +108,7 @@ namespace KneeRehab.Sensors
             _time = 0f;
             _phase = 0f;
             _hasPrev = false;
+            RollNextRep();
         }
 
         public void Tick(float deltaTime)
@@ -82,15 +118,19 @@ namespace KneeRehab.Sensors
             _time += deltaTime;
 
             // Advance phase through the rep cycle. One full cycle == one repetition.
-            _phase += deltaTime / Mathf.Max(0.5f, SecondsPerRep);
-            if (_phase >= 1f) _phase -= 1f;
+            _phase += (deltaTime / Mathf.Max(0.5f, SecondsPerRep)) * _currentRepSpeedScale;
+            if (_phase >= 1f)
+            {
+                _phase -= 1f;
+                RollNextRep(); // new depth/speed for the rep that just started
+            }
 
             // ---- Build the smooth flex/extend curve ----
             // A raised-cosine gives a gentle ease-in/ease-out at both extremes,
             // which matches how a person actually extends and returns the leg.
             // tri goes 0 -> 1 -> 0 across the rep (start -> extended -> start).
             float tri = 0.5f * (1f - Mathf.Cos(_phase * 2f * Mathf.PI));
-            float baseAngle = Mathf.Lerp(StartAngle, ExtendedAngle, tri);
+            float baseAngle = Mathf.Lerp(StartAngle, _currentRepExtended, tri);
 
             // Band-limited noise (Perlin) keeps it smooth instead of spiky random.
             float noise = (Mathf.PerlinNoise(_seedAngle, _time * 1.5f) - 0.5f) * 2f * NoiseDegrees;

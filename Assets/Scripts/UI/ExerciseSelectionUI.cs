@@ -68,6 +68,9 @@ namespace KneeRehab.UI
         private void OnExerciseChosen(ExerciseData exercise)
         {
             AppState.Instance.SelectedExercise = exercise;
+            // Seed the angle pickers with this exercise's sensible defaults.
+            AppState.Instance.StartAngle = exercise.targetMaximumAngle;
+            AppState.Instance.TargetAngle = exercise.targetMinimumAngle;
             ScreenManager.Instance.Show(AppScreen.ExerciseInstruction);
         }
     }

@@ -17,6 +17,10 @@ namespace KneeRehab.Data
 
         public int repetitionsCompleted;
         public int repetitionsTarget;
+        public int goodRepetitions;     // reps that reached the target angle
+        public float startAngle;        // user-chosen resting angle (deg)
+        public float targetAngle;       // user-chosen extension target (deg)
+        public bool stoppedEarly;       // true if the user ended the session early
 
         public float durationSeconds;
 

@@ -25,7 +25,6 @@ namespace KneeRehab.EditorTools
     public static class SceneBuilder
     {
         private const string ScenePath = "Assets/Scenes/Main.unity";
-        private const string ExerciseAssetPath = "Assets/ScriptableObjects/SeatedKneeExtension.asset";
 
         [MenuItem("Tools/Knee Rehab/Build Prototype Scene")]
         public static void Build()
@@ -57,6 +56,10 @@ namespace KneeRehab.EditorTools
             // --- 3D leg model ---
             var (kneeModel, binder) = BuildLegModel();
 
+            // --- Dedicated camera that renders ONLY the leg to a RenderTexture, so
+            //     the 3D leg can be shown inside a UI panel on the live screen. ---
+            var legRenderTexture = BuildLegCamera(kneeModel.gameObject);
+
             // --- EventSystem ---
             CreateEventSystem();
 
@@ -66,19 +69,20 @@ namespace KneeRehab.EditorTools
             // --- ScreenManager on the canvas ---
             var screenManager = canvas.gameObject.AddComponent<ScreenManager>();
 
-            // --- Load/create the Seated Knee Extension asset ---
-            var exercise = LoadOrCreateExercise();
+            // --- Load/create all exercise assets ---
+            var exercises = LoadOrCreateExercises();
 
             // --- Build prefabs we instantiate at runtime ---
             var cardPrefab = BuildExerciseCardPrefab();
             var historyRowPrefab = BuildHistoryRowPrefab();
+            var anglePresetPrefab = BuildAnglePresetButtonPrefab();
 
             // --- Build each screen panel ---
             var dashboard = BuildDashboard(canvas.transform);
-            var selection = BuildSelection(canvas.transform, cardPrefab, exercise);
-            var instruction = BuildInstruction(canvas.transform);
+            var selection = BuildSelection(canvas.transform, cardPrefab, exercises);
+            var instruction = BuildInstruction(canvas.transform, anglePresetPrefab);
             var results = BuildResults(canvas.transform);
-            var live = BuildLive(canvas.transform, results.GetComponent<ResultsUI>());
+            var live = BuildLive(canvas.transform, results.GetComponent<ResultsUI>(), legRenderTexture, anglePresetPrefab);
             var history = BuildHistory(canvas.transform, historyRowPrefab, results.GetComponent<ResultsUI>());
             var progress = BuildProgress(canvas.transform);
 
@@ -203,6 +207,8 @@ namespace KneeRehab.EditorTools
             var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
             var mat = new Material(shader);
             mat.color = c;
+            // URP/Lit uses _BaseColor; set it too so the tint shows under URP.
+            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", c);
             mr.sharedMaterial = mat;
             // Remove the auto-added collider; not needed for display.
             var col = go.GetComponent<Collider>();
@@ -210,25 +216,123 @@ namespace KneeRehab.EditorTools
         }
 
         // --------------------------------------------------------------------
-        // Exercise asset
+        // Leg camera -> RenderTexture (so the 3D leg shows inside a UI panel)
         // --------------------------------------------------------------------
-        private static ExerciseData LoadOrCreateExercise()
+        private static RenderTexture BuildLegCamera(GameObject legRoot)
         {
-            var existing = AssetDatabase.LoadAssetAtPath<ExerciseData>(ExerciseAssetPath);
+            // Reposition the leg so a front-ish camera frames it nicely.
+            legRoot.transform.position = new Vector3(100f, 0f, 0f); // off to the side, away from UI
+
+            System.IO.Directory.CreateDirectory("Assets/Settings");
+            var rtPath = "Assets/Settings/LegRenderTexture.renderTexture";
+            var rt = AssetDatabase.LoadAssetAtPath<RenderTexture>(rtPath);
+            if (rt == null)
+            {
+                rt = new RenderTexture(600, 800, 24, RenderTextureFormat.ARGB32)
+                {
+                    name = "LegRenderTexture",
+                    antiAliasing = 2
+                };
+                AssetDatabase.CreateAsset(rt, rtPath);
+                AssetDatabase.SaveAssets();
+            }
+
+            var camGo = new GameObject("LegCamera");
+            var cam = camGo.AddComponent<Camera>();
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0.93f, 0.96f, 0.99f, 1f);
+            cam.orthographic = false;
+            cam.fieldOfView = 32f;
+            cam.targetTexture = rt;
+            cam.cullingMask = ~0;
+            // Look at the leg from the front, slightly above.
+            camGo.transform.position = legRoot.transform.position + new Vector3(0f, 0.1f, -4.2f);
+            camGo.transform.rotation = Quaternion.Euler(6f, 0f, 0f);
+
+            // A dedicated light so the leg is lit regardless of scene lighting.
+            var lightGo = new GameObject("LegLight");
+            var l = lightGo.AddComponent<Light>();
+            l.type = LightType.Directional;
+            l.intensity = 1.2f;
+            lightGo.transform.position = legRoot.transform.position;
+            lightGo.transform.rotation = Quaternion.Euler(40f, 20f, 0f);
+
+            return rt;
+        }
+
+        // --------------------------------------------------------------------
+        // Exercise assets (all four)
+        // --------------------------------------------------------------------
+        private static ExerciseData[] LoadOrCreateExercises()
+        {
+            System.IO.Directory.CreateDirectory("Assets/ScriptableObjects");
+
+            var list = new System.Collections.Generic.List<ExerciseData>
+            {
+                MakeExercise("SeatedKneeExtension", "Seated Knee Extension",
+                    ExerciseType.SeatedKneeExtension, ExerciseDifficulty.Easy,
+                    "Gently straighten the knee from a seated position to improve extension range.",
+                    "Sit upright on a chair with both feet on the floor.\n" +
+                    "Slowly extend your knee until your leg is nearly straight.\n" +
+                    "Hold the position briefly.\n" +
+                    "Slowly return your leg to the starting position.",
+                    reps: 10, startAngle: 90f, targetAngle: 15f, secsPerRep: 4f),
+
+                MakeExercise("StandingKneeFlexion", "Standing Knee Flexion",
+                    ExerciseType.StandingKneeFlexion, ExerciseDifficulty.Moderate,
+                    "Bend the knee while standing to improve flexion range and control.",
+                    "Stand tall, holding a stable surface for balance.\n" +
+                    "Slowly bend your knee, raising your heel toward your buttock.\n" +
+                    "Hold briefly at the top of the movement.\n" +
+                    "Slowly lower your foot back to the floor.",
+                    reps: 10, startAngle: 15f, targetAngle: 90f, secsPerRep: 4f),
+
+                MakeExercise("SitToStand", "Sit-to-Stand",
+                    ExerciseType.SitToStand, ExerciseDifficulty.Challenging,
+                    "Stand up and sit down with control to build functional leg strength.",
+                    "Sit toward the front of a sturdy chair, feet flat.\n" +
+                    "Lean slightly forward and stand up smoothly.\n" +
+                    "Pause when fully upright.\n" +
+                    "Lower yourself back down with control.",
+                    reps: 8, startAngle: 90f, targetAngle: 15f, secsPerRep: 5f),
+
+                MakeExercise("StraightLegRaise", "Straight Leg Raise",
+                    ExerciseType.StraightLegRaise, ExerciseDifficulty.Moderate,
+                    "Raise a straight leg to strengthen the muscles around the knee.",
+                    "Lie or sit with the leg straight out in front of you.\n" +
+                    "Keeping the knee straight, raise the whole leg a short distance.\n" +
+                    "Hold briefly at the top.\n" +
+                    "Slowly lower the leg back down.",
+                    reps: 10, startAngle: 15f, targetAngle: 60f, secsPerRep: 4f),
+            };
+
+            return list.ToArray();
+        }
+
+        private static ExerciseData MakeExercise(string fileName, string name, ExerciseType type,
+            ExerciseDifficulty difficulty, string shortDesc, string instructions,
+            int reps, float startAngle, float targetAngle, float secsPerRep)
+        {
+            string path = $"Assets/ScriptableObjects/{fileName}.asset";
+            var existing = AssetDatabase.LoadAssetAtPath<ExerciseData>(path);
             if (existing != null) return existing;
 
-            System.IO.Directory.CreateDirectory("Assets/ScriptableObjects");
             var ex = ScriptableObject.CreateInstance<ExerciseData>();
-            ex.exerciseName = "Seated Knee Extension";
-            ex.exerciseType = ExerciseType.SeatedKneeExtension;
-            ex.difficulty = ExerciseDifficulty.Easy;
-            ex.targetRepetitions = 10;
-            ex.targetMinimumAngle = 20f;
-            ex.targetMaximumAngle = 90f;
-            ex.estimatedSecondsPerRep = 4f;
-            ex.extendedEnterThreshold = 35f;
-            ex.returnedThreshold = 75f;
-            AssetDatabase.CreateAsset(ex, ExerciseAssetPath);
+            ex.exerciseName = name;
+            ex.exerciseType = type;
+            ex.difficulty = difficulty;
+            ex.shortDescription = shortDesc;
+            ex.instructions = instructions;
+            ex.targetRepetitions = reps;
+            // targetMaximumAngle = the "rest/start" (bent) extreme; targetMinimumAngle
+            // = the goal extreme. We store the user-facing start/target into these.
+            ex.targetMaximumAngle = Mathf.Max(startAngle, targetAngle);
+            ex.targetMinimumAngle = Mathf.Min(startAngle, targetAngle);
+            ex.estimatedSecondsPerRep = secsPerRep;
+            float span = Mathf.Abs(startAngle - targetAngle);
+            ex.extendedEnterThreshold = ex.targetMinimumAngle + span * 0.45f;
+            ex.returnedThreshold = ex.targetMaximumAngle - span * 0.25f;
+            AssetDatabase.CreateAsset(ex, path);
             AssetDatabase.SaveAssets();
             return ex;
         }
@@ -246,14 +350,15 @@ namespace KneeRehab.EditorTools
         // --- Dashboard / Selection / Instruction / Live / Results / History / Progress ---
         // Implemented in SceneBuilderScreens.cs
         internal static GameObject BuildDashboard(Transform p) => SceneBuilderScreens.BuildDashboard(p);
-        internal static GameObject BuildSelection(Transform p, ExerciseCard card, ExerciseData ex) => SceneBuilderScreens.BuildSelection(p, card, ex);
-        internal static GameObject BuildInstruction(Transform p) => SceneBuilderScreens.BuildInstruction(p);
-        internal static GameObject BuildLive(Transform p, ResultsUI r) => SceneBuilderScreens.BuildLive(p, r);
+        internal static GameObject BuildSelection(Transform p, ExerciseCard card, ExerciseData[] ex) => SceneBuilderScreens.BuildSelection(p, card, ex);
+        internal static GameObject BuildInstruction(Transform p, Button anglePrefab) => SceneBuilderScreens.BuildInstruction(p, anglePrefab);
+        internal static GameObject BuildLive(Transform p, ResultsUI r, RenderTexture legRt, Button anglePrefab) => SceneBuilderScreens.BuildLive(p, r, legRt, anglePrefab);
         internal static GameObject BuildResults(Transform p) => SceneBuilderScreens.BuildResults(p);
         internal static GameObject BuildHistory(Transform p, HistoryRow row, ResultsUI r) => SceneBuilderScreens.BuildHistory(p, row, r);
         internal static GameObject BuildProgress(Transform p) => SceneBuilderScreens.BuildProgress(p);
         internal static ExerciseCard BuildExerciseCardPrefab() => SceneBuilderScreens.BuildExerciseCardPrefab();
         internal static HistoryRow BuildHistoryRowPrefab() => SceneBuilderScreens.BuildHistoryRowPrefab();
+        internal static Button BuildAnglePresetButtonPrefab() => SceneBuilderScreens.BuildAnglePresetButtonPrefab();
         internal static GameObject MakeScreenRoot(string name, Transform parent) => ScreenRoot(name, parent);
     }
 }

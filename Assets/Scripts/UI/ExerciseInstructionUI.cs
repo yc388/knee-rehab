@@ -27,6 +27,12 @@ namespace KneeRehab.UI
         public TMP_Text safetyText;
         public Image illustration;
 
+        [Header("Angle pickers (set before starting)")]
+        public Transform startPickerContainer;
+        public Transform targetPickerContainer;
+        public Button anglePresetButtonPrefab;
+        public TMP_Text angleSummaryText;
+
         [Header("Buttons")]
         public Button backButton;
         public Button startButton;
@@ -35,6 +41,9 @@ namespace KneeRehab.UI
         public GameObject countdownOverlay; // full-screen dim panel
         public TMP_Text countdownLabel;
         public float countdownStepSeconds = 1f;
+
+        private readonly System.Collections.Generic.List<Button> _startButtons = new System.Collections.Generic.List<Button>();
+        private readonly System.Collections.Generic.List<Button> _targetButtons = new System.Collections.Generic.List<Button>();
 
         private void Start()
         {
@@ -48,7 +57,69 @@ namespace KneeRehab.UI
         private void OnEnable()
         {
             Populate();
+            BuildPickers();
             if (countdownOverlay != null) countdownOverlay.SetActive(false);
+        }
+
+        private void BuildPickers()
+        {
+            if (anglePresetButtonPrefab == null) return;
+            BuildPickerRow(startPickerContainer, _startButtons, isStart: true);
+            BuildPickerRow(targetPickerContainer, _targetButtons, isStart: false);
+            HighlightSelections();
+            RefreshAngleSummary();
+        }
+
+        private void BuildPickerRow(Transform container, System.Collections.Generic.List<Button> store, bool isStart)
+        {
+            if (container == null) return;
+            for (int i = container.childCount - 1; i >= 0; i--)
+                Destroy(container.GetChild(i).gameObject);
+            store.Clear();
+
+            foreach (float preset in AppState.AnglePresets)
+            {
+                var btn = Instantiate(anglePresetButtonPrefab, container);
+                btn.gameObject.SetActive(true);
+                var label = btn.GetComponentInChildren<TMP_Text>();
+                if (label != null) label.text = $"{preset:F0}°";
+                float captured = preset;
+                btn.onClick.AddListener(() =>
+                {
+                    if (isStart) AppState.Instance.StartAngle = captured;
+                    else AppState.Instance.TargetAngle = captured;
+                    HighlightSelections();
+                    RefreshAngleSummary();
+                });
+                store.Add(btn);
+            }
+        }
+
+        private void HighlightSelections()
+        {
+            if (AppState.Instance == null) return;
+            HighlightRow(_startButtons, AppState.Instance.StartAngle);
+            HighlightRow(_targetButtons, AppState.Instance.TargetAngle);
+        }
+
+        private void HighlightRow(System.Collections.Generic.List<Button> buttons, float selected)
+        {
+            for (int i = 0; i < buttons.Count && i < AppState.AnglePresets.Length; i++)
+            {
+                bool isSel = Mathf.Approximately(AppState.AnglePresets[i], selected);
+                var img = buttons[i].GetComponent<Image>();
+                if (img != null)
+                    img.color = isSel ? new Color(0.16f, 0.55f, 0.72f) : new Color(0.80f, 0.85f, 0.90f);
+                var label = buttons[i].GetComponentInChildren<TMP_Text>();
+                if (label != null) label.color = isSel ? Color.white : new Color(0.25f, 0.3f, 0.35f);
+            }
+        }
+
+        private void RefreshAngleSummary()
+        {
+            if (angleSummaryText == null || AppState.Instance == null) return;
+            angleSummaryText.text =
+                $"Start {AppState.Instance.StartAngle:F0}°   •   Target {AppState.Instance.TargetAngle:F0}°";
         }
 
         private void Populate()

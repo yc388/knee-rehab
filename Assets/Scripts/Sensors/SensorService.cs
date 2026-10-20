@@ -110,6 +110,19 @@ namespace KneeRehab.Sensors
         }
 
         /// <summary>
+        /// Switch between the simulated ("Demo") provider and the network ("Actual")
+        /// provider at runtime. Disconnects first so the UI returns to a clean state.
+        /// </summary>
+        public void SetMode(SensorSourceMode mode)
+        {
+            if (Mode == mode && Provider != null) return;
+            DisconnectBrace();
+            Mode = mode;
+            BuildProvider();
+            ConnectionChanged?.Invoke(false);
+        }
+
+        /// <summary>
         /// Configure the simulated waveform to match the exercise about to start,
         /// then reset it so the first repetition begins cleanly. No-op for network.
         /// </summary>

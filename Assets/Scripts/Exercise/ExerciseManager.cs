@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using KneeRehab.Sensors;
 using KneeRehab.Data;
+using KneeRehab.Core;
 
 namespace KneeRehab.ExerciseSystem
 {
@@ -47,15 +48,28 @@ namespace KneeRehab.ExerciseSystem
         public float CurrentRom => _rom?.CurrentRom ?? 0f;
         public string CurrentFeedback { get; private set; } = "Get ready";
 
+        // ---- User-settable angles (from AppState; adjustable live) ----
+        /// <summary>Resting / bent start position (deg).</summary>
+        public float StartAngle { get; private set; } = 90f;
+        /// <summary>Extension goal to reach (deg). A rep is "good" if it reaches this.</summary>
+        public float TargetAngle { get; private set; } = 15f;
+        /// <summary>How many reps reached the target angle ("good reps").</summary>
+        public int GoodRepCount { get; private set; }
+        [Tooltip("A rep counts as 'good' if its deepest angle gets within this many " +
+                 "degrees of the target.")]
+        public float goodRepTolerance = 8f;
+
         // ---- Events for consumers ----
         /// <summary>Every processed sample: (angle, speed). Drives 3D leg + graph + numbers.</summary>
         public event Action<float, float> SampleProcessed;
-        /// <summary>Rep completed: (repNumber). UI updates the counter.</summary>
-        public event Action<int> RepCompleted;
+        /// <summary>Rep completed: (repNumber, wasGoodRep). UI updates the counter.</summary>
+        public event Action<int, bool> RepCompleted;
         /// <summary>Feedback text changed.</summary>
         public event Action<string> FeedbackChanged;
-        /// <summary>Session finished (target reached). Carries the saved record.</summary>
+        /// <summary>Session finished (target reached or stopped early). Carries the saved record.</summary>
         public event Action<ExerciseSession> SessionCompleted;
+        /// <summary>Raised when the live target angle changes.</summary>
+        public event Action<float> TargetAngleChanged;
 
         // ---- Internal trackers ----
         private RepetitionDetector _detector;
@@ -86,9 +100,21 @@ namespace KneeRehab.ExerciseSystem
         {
             CurrentExercise = exercise ?? throw new ArgumentNullException(nameof(exercise));
 
-            _detector = new RepetitionDetector(
-                exercise.extendedEnterThreshold,
-                exercise.returnedThreshold);
+            // Prefer the user's chosen angles (from AppState); fall back to the
+            // exercise's built-in defaults if AppState isn't present.
+            if (AppState.Instance != null)
+            {
+                StartAngle = AppState.Instance.StartAngle;
+                TargetAngle = AppState.Instance.TargetAngle;
+            }
+            else
+            {
+                StartAngle = exercise.targetMaximumAngle;
+                TargetAngle = exercise.targetMinimumAngle;
+            }
+
+            // The detector is direction-agnostic: it just needs the start and target.
+            _detector = new RepetitionDetector(StartAngle, TargetAngle);
             _detector.RepetitionCompleted += OnRepetitionCompleted;
 
             _rom = new RomTracker();
@@ -98,17 +124,48 @@ namespace KneeRehab.ExerciseSystem
             _timeTrace.Clear();
             _speedSamples.Clear();
             _sampleDecimator = 0;
+            GoodRepCount = 0;
             ElapsedSeconds = 0f;
-            CurrentAngle = exercise.targetMaximumAngle;
+            CurrentAngle = StartAngle;
             CurrentSpeed = 0f;
             IsMeasuring = false;
             SetFeedback("Get ready");
 
-            // Pace the simulator to this exercise.
+            // Pace the simulator to the chosen angles.
             SensorService.Instance?.ConfigureSimulation(
-                exercise.targetMaximumAngle,
-                exercise.targetMinimumAngle,
+                StartAngle,
+                TargetAngle,
                 exercise.estimatedSecondsPerRep);
+        }
+
+        /// <summary>
+        /// Change the target extension angle mid-session (from the live angle picker).
+        /// Updates rep-detection thresholds and the simulator on the fly.
+        /// </summary>
+        public void SetTargetAngle(float target)
+        {
+            TargetAngle = target;
+            if (AppState.Instance != null) AppState.Instance.TargetAngle = target;
+            ReconfigureFromAngles();
+            TargetAngleChanged?.Invoke(target);
+        }
+
+        /// <summary>Change the starting (resting) angle mid-session.</summary>
+        public void SetStartAngle(float start)
+        {
+            StartAngle = start;
+            if (AppState.Instance != null) AppState.Instance.StartAngle = start;
+            ReconfigureFromAngles();
+        }
+
+        private void ReconfigureFromAngles()
+        {
+            _detector?.UpdateThresholds(StartAngle, TargetAngle);
+
+            SensorService.Instance?.ConfigureSimulation(
+                StartAngle,
+                TargetAngle,
+                CurrentExercise != null ? CurrentExercise.estimatedSecondsPerRep : 4f);
         }
 
         /// <summary>Called by the live screen after the countdown finishes.</summary>
@@ -176,7 +233,20 @@ namespace KneeRehab.ExerciseSystem
         private void OnRepetitionCompleted(int repNumber, float repMin, float repMax)
         {
             _rom.RecordRepetition(repMin, repMax);
-            RepCompleted?.Invoke(repNumber);
+
+            // A rep is "good" if its deepest extension reached (close to) the target.
+            // Deepest extension = smallest angle when target < start (extension), or
+            // largest angle when the motion is a flexion exercise.
+            bool extensionExercise = TargetAngle <= StartAngle;
+            float deepest = extensionExercise ? repMin : repMax;
+            bool good = extensionExercise
+                ? deepest <= TargetAngle + goodRepTolerance
+                : deepest >= TargetAngle - goodRepTolerance;
+
+            if (good) GoodRepCount++;
+
+            RepCompleted?.Invoke(repNumber, good);
+            SetFeedbackSticky(good ? "Good rep! Target reached ✓" : "Rep counted — reach a little further", 1.2f);
 
             if (repNumber >= TargetReps)
             {
@@ -185,12 +255,21 @@ namespace KneeRehab.ExerciseSystem
         }
 
         /// <summary>
+        /// End the session early (user pressed Stop). Still produces and saves a
+        /// results record from whatever was completed so far.
+        /// </summary>
+        public void StopSessionEarly()
+        {
+            if (CurrentExercise == null || !IsMeasuring) return;
+            CompleteSession(stoppedEarly: true);
+        }
+
+        /// <summary>
         /// Simple, non-diagnostic exercise feedback based on angle / speed / state.
         /// </summary>
         private void UpdateFeedback(float angle)
         {
-            var ex = CurrentExercise;
-            if (ex == null) return;
+            if (CurrentExercise == null) return;
 
             if (CurrentSpeed > tooFastSpeed)
             {
@@ -200,14 +279,11 @@ namespace KneeRehab.ExerciseSystem
 
             switch (_detector.State)
             {
-                case RepetitionDetector.MovementState.Extending:
-                    if (angle > ex.targetMinimumAngle + 20f)
-                        SetFeedback("Keep extending your knee");
-                    else
-                        SetFeedback("Good movement");
+                case RepetitionDetector.MovementState.Moving:
+                    SetFeedback("Good movement — keep going toward the target");
                     break;
 
-                case RepetitionDetector.MovementState.Extended:
+                case RepetitionDetector.MovementState.Reached:
                     SetFeedback("Great! Hold, then return to the start");
                     break;
 
@@ -221,10 +297,22 @@ namespace KneeRehab.ExerciseSystem
             }
         }
 
+        private float _feedbackHoldUntil;
+
         private void SetFeedback(string msg)
         {
+            // Respect a short hold so important messages (e.g. "Good rep!") aren't
+            // instantly overwritten by the per-sample movement feedback.
+            if (Time.unscaledTime < _feedbackHoldUntil) return;
             if (msg == CurrentFeedback) return;
             CurrentFeedback = msg;
+            FeedbackChanged?.Invoke(msg);
+        }
+
+        private void SetFeedbackSticky(string msg, float holdSeconds)
+        {
+            CurrentFeedback = msg;
+            _feedbackHoldUntil = Time.unscaledTime + holdSeconds;
             FeedbackChanged?.Invoke(msg);
         }
 
@@ -233,11 +321,11 @@ namespace KneeRehab.ExerciseSystem
         /// completion event. Called automatically on reaching target reps, or can be
         /// called early (e.g. a "Stop" button) if you add one.
         /// </summary>
-        public void CompleteSession()
+        public void CompleteSession(bool stoppedEarly = false)
         {
             if (CurrentExercise == null) return;
             StopMeasuring();
-            SetFeedback("Exercise Complete!");
+            SetFeedback(stoppedEarly ? "Exercise Stopped" : "Exercise Complete!");
 
             float avgSpeed = 0f;
             if (_speedSamples.Count > 0)
@@ -264,6 +352,10 @@ namespace KneeRehab.ExerciseSystem
                 exerciseName = CurrentExercise.exerciseName,
                 repetitionsCompleted = _detector.RepCount,
                 repetitionsTarget = TargetReps,
+                goodRepetitions = GoodRepCount,
+                startAngle = StartAngle,
+                targetAngle = TargetAngle,
+                stoppedEarly = stoppedEarly,
                 durationSeconds = ElapsedSeconds,
                 maxFlexion = _rom.MaxFlexion,
                 maxExtension = _rom.MaxExtension,

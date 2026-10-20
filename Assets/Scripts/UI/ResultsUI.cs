@@ -62,8 +62,11 @@ namespace KneeRehab.UI
             _session = s;
             if (s == null) return;
 
-            if (exerciseNameText != null) exerciseNameText.text = s.exerciseName;
+            if (exerciseNameText != null)
+                exerciseNameText.text = s.stoppedEarly ? s.exerciseName + "  (stopped early)" : s.exerciseName;
             if (repsText != null) repsText.text = $"{s.repetitionsCompleted} / {s.repetitionsTarget}";
+            // Repurpose the flexion/extension slots to also surface good reps + target
+            // via the performance message; keep the raw stats below.
             if (maxFlexionText != null) maxFlexionText.text = $"{s.maxFlexion:F0}°";
             if (maxExtensionText != null) maxExtensionText.text = $"{s.maxExtension:F0}°";
             if (maxRomText != null) maxRomText.text = $"{s.maxRom:F0}°";
@@ -87,11 +90,14 @@ namespace KneeRehab.UI
 
         private string BuildPerformanceMessage(ExerciseSession s)
         {
+            string goodLine = $"{s.goodRepetitions} of {s.repetitionsCompleted} reps reached your " +
+                              $"{s.targetAngle:F0}° target (start {s.startAngle:F0}°).\n";
+
             if (s.overallScore >= 85)
-                return "Excellent session. Your movement was consistent throughout most of the exercise.";
+                return goodLine + "Excellent session. Your movement was consistent throughout most of the exercise.";
             if (s.overallScore >= 65)
-                return "Good session. You completed the exercise with steady movement.";
-            return "Session complete. Keep practising to build consistency and range.";
+                return goodLine + "Good session. You completed the exercise with steady movement.";
+            return goodLine + "Session complete. Keep practising to build consistency and range.";
         }
 
         private string BuildImprovementMessage(ExerciseSession s)
