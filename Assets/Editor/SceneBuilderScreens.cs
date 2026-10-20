@@ -637,9 +637,14 @@ namespace KneeRehab.EditorTools
             scroll.movementType = ScrollRect.MovementType.Clamped;
             scroll.scrollSensitivity = 24f;
 
+            // Add generous bottom padding so the final row always has breathing room
+            // and never sits flush against the viewport edge / a fixed footer.
+            var pad = new RectOffset(padding.left, padding.right, padding.top,
+                Mathf.Max(padding.bottom, 40));
+
             var v = content.AddComponent<VerticalLayoutGroup>();
             v.spacing = spacing;
-            v.padding = padding;
+            v.padding = pad;
             v.childAlignment = TextAnchor.UpperCenter;
             v.childControlWidth = true;
             // Control height HERE so the ContentSizeFitter can compute total height
@@ -660,9 +665,12 @@ namespace KneeRehab.EditorTools
             var scroll = scrollGo.AddComponent<ScrollRect>();
             scroll.horizontal = false;
 
-            var viewport = UIFactory.Panel("Viewport", scrollGo.transform, new Color(1, 1, 1, 0.01f));
+            var viewport = UIFactory.Node("Viewport", scrollGo.transform);
             UIFactory.Stretch(UIFactory.Rect(viewport));
-            viewport.AddComponent<Mask>().showMaskGraphic = false;
+            // RectMask2D reliably clips content to the viewport bounds (no stencil /
+            // graphic needed, unlike Mask). This guarantees scrolled rows cannot
+            // render outside the viewport (e.g. under a fixed footer button).
+            viewport.AddComponent<RectMask2D>();
             scroll.viewport = UIFactory.Rect(viewport);
 
             content = UIFactory.Node("Content", viewport.transform);
