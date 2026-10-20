@@ -44,6 +44,9 @@ namespace KneeRehab.EditorTools
                 TextAlignmentOptions.Center, FontStyles.Bold);
             UIFactory.Stretch(UIFactory.Rect(t));
 
+            // Ensure the back button renders/raycasts on top of the title label.
+            if (backButton != null) backButton.transform.SetAsLastSibling();
+
             var content = UIFactory.Node("Content", panel.transform);
             var crt = UIFactory.Rect(content);
             crt.anchorMin = Vector2.zero; crt.anchorMax = Vector2.one;

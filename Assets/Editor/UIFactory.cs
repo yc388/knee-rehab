@@ -74,6 +74,9 @@ namespace KneeRehab.EditorTools
             t.color = color;
             t.alignment = align;
             t.fontStyle = style;
+            // Labels must never intercept clicks meant for buttons underneath them
+            // (e.g. a stretched title label sitting over a back button).
+            t.raycastTarget = false;
             t.textWrappingMode = TextWrappingModes.Normal;
             return t;
         }
@@ -99,6 +102,7 @@ namespace KneeRehab.EditorTools
             label.color = fg;
             label.alignment = TextAlignmentOptions.Center;
             label.fontStyle = FontStyles.Bold;
+            label.raycastTarget = false; // let clicks pass through to the button Image
             return btn;
         }
 
