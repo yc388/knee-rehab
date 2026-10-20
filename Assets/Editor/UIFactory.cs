@@ -26,6 +26,13 @@ namespace KneeRehab.EditorTools
             return rt;
         }
 
+        // Convenience overload: accept any Component (e.g. a TMP label) and resolve
+        // its GameObject, so callers can pass a label directly.
+        public static RectTransform Rect(Component component)
+        {
+            return Rect(component.gameObject);
+        }
+
         public static void Stretch(RectTransform rt, float pad = 0f)
         {
             rt.anchorMin = Vector2.zero;
