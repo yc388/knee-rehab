@@ -61,8 +61,12 @@ namespace KneeRehab.EditorTools
         public static GameObject BuildDashboard(Transform parent)
         {
             var panel = SceneBuilder.MakeScreenRoot("Dashboard", parent);
-            var content = Header(panel, "Knee Rehabilitation", out _, withBack: false);
-            UIFactory.VLayout(content, 16, Pad(24, 20, 24, 20));
+            var area = Header(panel, "Knee Rehabilitation", out _, withBack: false);
+
+            // Scrollable vertical column so the whole dashboard is reachable on any
+            // window/tablet size (History + Progress live at the bottom).
+            var content = MakeScrollableColumn(area.transform, spacing: 16,
+                padding: Pad(24, 20, 24, 20));
 
             var ui = panel.AddComponent<DashboardUI>();
 
@@ -177,8 +181,8 @@ namespace KneeRehab.EditorTools
         public static GameObject BuildInstruction(Transform parent, Button anglePrefab)
         {
             var panel = SceneBuilder.MakeScreenRoot("ExerciseInstruction", parent);
-            var content = Header(panel, "Exercise Instructions", out var back, withBack: true);
-            UIFactory.VLayout(content, 12, Pad(24, 18, 24, 18));
+            var area = Header(panel, "Exercise Instructions", out var back, withBack: true);
+            var content = MakeScrollableColumn(area.transform, 12, Pad(24, 18, 24, 18));
 
             var ui = panel.AddComponent<ExerciseInstructionUI>();
             ui.backButton = back;
@@ -379,8 +383,8 @@ namespace KneeRehab.EditorTools
         public static GameObject BuildResults(Transform parent)
         {
             var panel = SceneBuilder.MakeScreenRoot("ExerciseResults", parent);
-            var content = Header(panel, "Performance Results", out _, withBack: false);
-            UIFactory.VLayout(content, 12, Pad(20, 16, 20, 16));
+            var area = Header(panel, "Performance Results", out _, withBack: false);
+            var content = MakeScrollableColumn(area.transform, 12, Pad(20, 16, 20, 16));
 
             var ui = panel.AddComponent<ResultsUI>();
 
@@ -476,8 +480,8 @@ namespace KneeRehab.EditorTools
         public static GameObject BuildProgress(Transform parent)
         {
             var panel = SceneBuilder.MakeScreenRoot("Progress", parent);
-            var content = Header(panel, "Rehabilitation Progress", out var back, withBack: true);
-            UIFactory.VLayout(content, 16, Pad(24, 20, 24, 20));
+            var area = Header(panel, "Rehabilitation Progress", out var back, withBack: true);
+            var content = MakeScrollableColumn(area.transform, 16, Pad(24, 20, 24, 20));
 
             var ui = panel.AddComponent<ProgressUI>();
             ui.backButton = back;
@@ -575,6 +579,33 @@ namespace KneeRehab.EditorTools
         // ===================================================================
         // Shared helpers
         // ===================================================================
+        /// <summary>
+        /// A vertical scroll column: fills its parent, scrolls vertically, and its
+        /// content auto-grows to fit children via a ContentSizeFitter. Returns the
+        /// content GameObject (already carrying a VerticalLayoutGroup) to add rows to.
+        /// </summary>
+        private static GameObject MakeScrollableColumn(Transform parent, float spacing, RectOffset padding)
+        {
+            var scroll = MakeScroll(parent, out var content);
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.scrollSensitivity = 24f;
+
+            var v = content.AddComponent<VerticalLayoutGroup>();
+            v.spacing = spacing;
+            v.padding = padding;
+            v.childAlignment = TextAnchor.UpperCenter;
+            v.childControlWidth = true;
+            // Control height HERE so the ContentSizeFitter can compute total height
+            // from each child's LayoutElement.preferredHeight (Size() sets these).
+            v.childControlHeight = true;
+            v.childForceExpandWidth = true;
+            v.childForceExpandHeight = false;
+
+            var fitter = content.AddComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            return content;
+        }
+
         private static ScrollRect MakeScroll(Transform parent, out GameObject content)
         {
             var scrollGo = UIFactory.Node("Scroll", parent);
