@@ -97,6 +97,12 @@ namespace KneeRehab.EditorTools
             // (e.g. a stretched title label sitting over a back button).
             t.raycastTarget = false;
             t.textWrappingMode = TextWrappingModes.Normal;
+
+            // Give every label a sensible default height (~1.4x font) so it doesn't
+            // collapse inside a vertical layout. Callers that Stretch() or Size() the
+            // label afterward simply override this.
+            var rt = t.GetComponent<RectTransform>();
+            if (rt != null) rt.sizeDelta = new Vector2(rt.sizeDelta.x, size * 1.4f);
             return t;
         }
 
@@ -141,9 +147,7 @@ namespace KneeRehab.EditorTools
             v.padding = padding;
             v.childAlignment = align;
             v.childControlWidth = true;
-            // Control height too, so each child's LayoutElement.preferredHeight is
-            // honoured and siblings never overlap.
-            v.childControlHeight = true;
+            v.childControlHeight = false; // children size themselves via RectTransform height
             v.childForceExpandWidth = true;
             v.childForceExpandHeight = false;
             return v;
@@ -167,6 +171,17 @@ namespace KneeRehab.EditorTools
             if (minH >= 0) le.minHeight = minH;
             if (prefH >= 0) le.preferredHeight = prefH;
             if (minW >= 0) le.minWidth = minW;
+
+            // Also set the RectTransform height directly. A VerticalLayoutGroup with
+            // childControlHeight = false positions children by their RectTransform
+            // height, so this makes Size() effective in that mode (which is what all
+            // our vertical layouts use).
+            float h = prefH >= 0 ? prefH : minH;
+            if (h >= 0)
+            {
+                var rt = go.GetComponent<RectTransform>();
+                if (rt != null) rt.sizeDelta = new Vector2(rt.sizeDelta.x, h);
+            }
             return le;
         }
 
