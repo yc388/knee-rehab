@@ -275,34 +275,63 @@ namespace KneeRehab.EditorTools
             root.transform.position = new Vector3(200f, 0f, 0f);
 
             // --- Placeholder "person" stand-in (replace with a Mixamo character) ---
-            // A clearly human-ish silhouette from primitives, with a simple knee-brace
-            // cuff on one leg, so the panel is not empty before you import a character.
+            // Human-ish silhouette from primitives. The RIGHT leg is rigged with a
+            // knee pivot so the shin can actually bend (demo loop + sensor-driven).
             var figure = new GameObject("PlaceholderFigure");
             figure.transform.SetParent(root.transform, false);
 
-            MakePart(figure.transform, PrimitiveType.Capsule, "Torso",
-                new Vector3(0, 1.15f, 0), new Vector3(0.5f, 0.45f, 0.3f), new Color(0.30f, 0.45f, 0.62f));
-            MakePart(figure.transform, PrimitiveType.Sphere, "Head",
-                new Vector3(0, 1.70f, 0), new Vector3(0.28f, 0.28f, 0.28f), new Color(0.85f, 0.72f, 0.60f));
-            // Legs
-            MakePart(figure.transform, PrimitiveType.Capsule, "LegL",
-                new Vector3(-0.14f, 0.45f, 0), new Vector3(0.18f, 0.5f, 0.18f), new Color(0.25f, 0.32f, 0.45f));
-            MakePart(figure.transform, PrimitiveType.Capsule, "LegR",
-                new Vector3(0.14f, 0.45f, 0), new Vector3(0.18f, 0.5f, 0.18f), new Color(0.25f, 0.32f, 0.45f));
-            // Knee brace cuff on the right leg
-            MakePart(figure.transform, PrimitiveType.Cylinder, "BraceCuff",
-                new Vector3(0.14f, 0.55f, 0.02f), new Vector3(0.24f, 0.12f, 0.24f), new Color(0.90f, 0.55f, 0.20f));
-            // Arms
-            MakePart(figure.transform, PrimitiveType.Capsule, "ArmL",
-                new Vector3(-0.42f, 1.15f, 0), new Vector3(0.12f, 0.35f, 0.12f), new Color(0.30f, 0.45f, 0.62f));
-            MakePart(figure.transform, PrimitiveType.Capsule, "ArmR",
-                new Vector3(0.42f, 1.15f, 0), new Vector3(0.12f, 0.35f, 0.12f), new Color(0.30f, 0.45f, 0.62f));
+            var skin = new Color(0.85f, 0.72f, 0.60f);
+            var shirt = new Color(0.30f, 0.45f, 0.62f);
+            var limb = new Color(0.28f, 0.36f, 0.50f);
 
-            // Animator so you can later assign a Humanoid controller with demo clips.
+            MakePart(figure.transform, PrimitiveType.Capsule, "Torso",
+                new Vector3(0, 1.15f, 0), new Vector3(0.5f, 0.45f, 0.3f), shirt);
+            MakePart(figure.transform, PrimitiveType.Sphere, "Head",
+                new Vector3(0, 1.70f, 0), new Vector3(0.28f, 0.28f, 0.28f), skin);
+            MakePart(figure.transform, PrimitiveType.Capsule, "ArmL",
+                new Vector3(-0.42f, 1.15f, 0), new Vector3(0.12f, 0.35f, 0.12f), shirt);
+            MakePart(figure.transform, PrimitiveType.Capsule, "ArmR",
+                new Vector3(0.42f, 1.15f, 0), new Vector3(0.12f, 0.35f, 0.12f), shirt);
+
+            // LEFT leg: static thigh + shin (just a straight standing leg).
+            MakePart(figure.transform, PrimitiveType.Capsule, "ThighL",
+                new Vector3(-0.15f, 0.62f, 0), new Vector3(0.17f, 0.30f, 0.17f), limb);
+            MakePart(figure.transform, PrimitiveType.Capsule, "ShinL",
+                new Vector3(-0.15f, 0.20f, 0), new Vector3(0.15f, 0.26f, 0.15f), limb);
+
+            // RIGHT leg: thigh fixed, knee joint pivot, shin as child that rotates.
+            MakePart(figure.transform, PrimitiveType.Capsule, "ThighR",
+                new Vector3(0.15f, 0.62f, 0), new Vector3(0.17f, 0.30f, 0.17f), limb);
+
+            var kneeJoint = new GameObject("DemoKneeJoint");
+            kneeJoint.transform.SetParent(figure.transform, false);
+            kneeJoint.transform.localPosition = new Vector3(0.15f, 0.40f, 0f); // at the knee
+
+            // Brace cuff around the knee joint.
+            MakePart(kneeJoint.transform, PrimitiveType.Cylinder, "BraceCuff",
+                new Vector3(0f, 0f, 0.02f), new Vector3(0.22f, 0.10f, 0.22f), new Color(0.95f, 0.58f, 0.18f));
+
+            // Lower leg pivots at the knee.
+            var demoLower = new GameObject("DemoLowerLeg");
+            demoLower.transform.SetParent(kneeJoint.transform, false);
+            demoLower.transform.localPosition = Vector3.zero;
+            MakePart(demoLower.transform, PrimitiveType.Capsule, "ShinR",
+                new Vector3(0f, -0.22f, 0f), new Vector3(0.15f, 0.26f, 0.15f), limb);
+            MakePart(demoLower.transform, PrimitiveType.Cube, "FootR",
+                new Vector3(0f, -0.46f, 0.10f), new Vector3(0.16f, 0.07f, 0.28f), new Color(0.2f, 0.25f, 0.33f));
+
+            var demoKneeCtrl = figure.AddComponent<KneeRehab.Visualization.KneeModelController>();
+            demoKneeCtrl.lowerLeg = demoLower.transform;
+            demoKneeCtrl.straightEuler = new Vector3(0f, 0f, 0f);
+            demoKneeCtrl.bentEuler = new Vector3(70f, 0f, 0f); // bend forward at the knee
+            demoKneeCtrl.referenceBentAngle = 90f;
+
+            // Animator kept for the optional Mixamo upgrade path.
             var animator = root.AddComponent<Animator>();
 
             var controller = root.AddComponent<KneeRehab.Visualization.HumanDemoController>();
             controller.animator = animator;
+            controller.kneeModel = demoKneeCtrl;
 
             // Camera -> RenderTexture
             System.IO.Directory.CreateDirectory("Assets/Settings");
@@ -310,7 +339,9 @@ namespace KneeRehab.EditorTools
             var rt = AssetDatabase.LoadAssetAtPath<RenderTexture>(rtPath);
             if (rt == null)
             {
-                rt = new RenderTexture(600, 760, 24, RenderTextureFormat.ARGB32)
+                // Square texture so the figure is never stretched (display panel is
+                // also square + the image uses aspect-fit).
+                rt = new RenderTexture(720, 720, 24, RenderTextureFormat.ARGB32)
                 { name = "HumanDemoRenderTexture", antiAliasing = 2 };
                 AssetDatabase.CreateAsset(rt, rtPath);
                 AssetDatabase.SaveAssets();
@@ -320,10 +351,12 @@ namespace KneeRehab.EditorTools
             var cam = camGo.AddComponent<Camera>();
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.93f, 0.96f, 0.99f, 1f);
-            cam.fieldOfView = 40f;
+            cam.fieldOfView = 45f;
+            cam.aspect = 1f; // square to match the texture
             cam.targetTexture = rt;
-            var focus = root.transform.position + new Vector3(0f, 0.9f, 0f);
-            camGo.transform.position = root.transform.position + new Vector3(0f, 1.0f, -4.6f);
+            // Frame the whole standing figure (head ~1.85 down to foot ~0).
+            var focus = root.transform.position + new Vector3(0f, 0.85f, 0f);
+            camGo.transform.position = root.transform.position + new Vector3(0f, 0.9f, -4.8f);
             camGo.transform.LookAt(focus);
 
             var lightGo = new GameObject("HumanDemoLight");

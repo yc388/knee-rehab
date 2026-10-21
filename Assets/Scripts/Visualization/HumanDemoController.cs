@@ -1,80 +1,107 @@
 using UnityEngine;
 using KneeRehab.Core;
+using KneeRehab.ExerciseSystem;
 
 namespace KneeRehab.Visualization
 {
     /// <summary>
-    /// Plays a looping "how to do this exercise" demo animation on a humanoid model
-    /// (e.g. a free Mixamo character) as a REFERENCE guide on the instruction screen.
+    /// Drives the human demo figure on the instruction screen.
     ///
-    /// This is option "B1": a demo loop that is INDEPENDENT of the live sensor — it
-    /// shows the patient how the movement should look, it does not react to IMU data.
-    /// (The live 3D leg on the exercise screen is the sensor-driven one.)
+    /// It supports TWO backends so it works now and upgrades later:
+    ///   (1) PRIMITIVE mode (default): rotates a knee joint transform with a looping
+    ///       flex/extend motion so the placeholder figure's leg actually bends. No
+    ///       art assets needed.
+    ///   (2) MIXAMO mode: if an Animator with named states is assigned, it plays the
+    ///       matching looping clip per exercise instead. (See README for setup.)
     ///
-    /// SETUP (one-time, with a free Mixamo character):
-    ///   1. Download a character + the animations (Squat, Lunge, etc.) from
-    ///      mixamo.com as FBX "with skin". Import into Assets/Models/.
-    ///   2. Set each FBX rig to "Humanoid" and each clip to Loop Time = true.
-    ///   3. Create an Animator Controller with one state per exercise, each state
-    ///      NAMED exactly to match ExerciseData.demoClipName (e.g. "Squat", "Lunge",
-    ///      "SeatedKneeExtension", "SitToStand"). Add a default idle state too.
-    ///   4. Put the character under the LegCamera's view (SceneBuilder positions a
-    ///      HumanDemoRoot for you), add this component, and assign 'animator'.
-    ///
-    /// If no animator/clips are present yet, this does nothing (the primitive leg
-    /// still works), so the app runs fine before you add the character.
+    /// This is a REFERENCE demo loop (option B1) — independent of the live sensor.
     ///
     /// ATTACH TO: the human demo root GameObject.
     /// </summary>
     public class HumanDemoController : MonoBehaviour
     {
-        [Tooltip("Animator on the humanoid model. Its states should be named to match " +
-                 "each exercise's demoClipName.")]
+        [Header("Mixamo mode (optional)")]
+        [Tooltip("If assigned with named states, plays clips instead of the primitive knee loop.")]
         public Animator animator;
-
-        [Tooltip("Played when an exercise has no demoClipName, or as the resting pose.")]
         public string defaultState = "Idle";
-
-        [Tooltip("Cross-fade time between demo clips, seconds.")]
         public float crossFade = 0.2f;
 
-        private string _current;
+        [Header("Primitive mode")]
+        [Tooltip("Knee joint whose child lower-leg rotates. If set, the figure's knee " +
+                 "bends with a looping demo motion.")]
+        public KneeModelController kneeModel;
+
+        [Tooltip("Degrees the demo knee flexes between (start -> target -> start).")]
+        public float demoStartAngle = 10f;
+        public float demoTargetAngle = 90f;
+        [Tooltip("Seconds for one full bend-and-return cycle.")]
+        public float demoSecondsPerCycle = 3.5f;
+
+        private string _currentState;
+        private float _phase;
+        private bool _useAnimator;
 
         private void OnEnable()
         {
+            _useAnimator = animator != null && animator.runtimeAnimatorController != null;
             PlayForSelectedExercise();
         }
 
         /// <summary>
-        /// Called by the instruction screen when it appears. Chooses the clip for the
-        /// currently selected exercise.
+        /// Choose the demo for the currently selected exercise. In primitive mode this
+        /// sets the flex range from the exercise's default angles; in Mixamo mode it
+        /// plays the matching named state.
         /// </summary>
         public void PlayForSelectedExercise()
         {
             var ex = AppState.Instance != null ? AppState.Instance.SelectedExercise : null;
-            string state = (ex != null && !string.IsNullOrEmpty(ex.demoClipName))
-                ? ex.demoClipName
-                : defaultState;
-            Play(state);
+
+            if (_useAnimator)
+            {
+                string state = (ex != null && !string.IsNullOrEmpty(ex.demoClipName))
+                    ? ex.demoClipName
+                    : defaultState;
+                PlayState(state);
+                return;
+            }
+
+            // Primitive mode: pace the knee loop to the exercise's default range.
+            if (ex != null)
+            {
+                demoStartAngle = Mathf.Min(ex.defaultStartAngle, ex.defaultTargetAngle);
+                demoTargetAngle = Mathf.Max(ex.defaultStartAngle, ex.defaultTargetAngle);
+                demoSecondsPerCycle = Mathf.Max(2f, ex.estimatedSecondsPerRep);
+            }
+            _phase = 0f;
         }
 
-        public void Play(string stateName)
+        private void PlayState(string stateName)
         {
             if (animator == null || string.IsNullOrEmpty(stateName)) return;
-            if (_current == stateName) return;
-
-            // Only play if the state actually exists, so a missing clip just leaves
-            // the current animation running instead of erroring.
+            if (_currentState == stateName) return;
             if (animator.HasState(0, Animator.StringToHash(stateName)))
             {
                 animator.CrossFadeInFixedTime(stateName, crossFade);
-                _current = stateName;
+                _currentState = stateName;
             }
             else if (animator.HasState(0, Animator.StringToHash(defaultState)))
             {
                 animator.CrossFadeInFixedTime(defaultState, crossFade);
-                _current = defaultState;
+                _currentState = defaultState;
             }
+        }
+
+        private void Update()
+        {
+            if (_useAnimator || kneeModel == null) return;
+
+            // Looping raised-cosine flex/extend so the demo knee bends smoothly.
+            _phase += Time.deltaTime / Mathf.Max(1f, demoSecondsPerCycle);
+            if (_phase >= 1f) _phase -= 1f;
+
+            float tri = 0.5f * (1f - Mathf.Cos(_phase * 2f * Mathf.PI)); // 0->1->0
+            float angle = Mathf.Lerp(demoStartAngle, demoTargetAngle, tri);
+            kneeModel.SetKneeAngle(angle);
         }
     }
 }

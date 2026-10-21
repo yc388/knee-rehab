@@ -217,10 +217,14 @@ namespace KneeRehab.EditorTools
             UIFactory.Label("DemoTitle", demoCard.transform, "Demonstration", 18,
                 UIFactory.TextMuted, TextAlignmentOptions.Center);
             var demoImgGo = UIFactory.Node("DemoImage", demoCard.transform);
-            UIFactory.Size(demoImgGo, 260, 280);
+            UIFactory.Size(demoImgGo, 280, 280);
             var demoRaw = demoImgGo.AddComponent<RawImage>();
             demoRaw.texture = humanDemoRt;
             demoRaw.raycastTarget = false;
+            // Square render texture + fit-in-parent => figure keeps correct proportions.
+            var demoFit = demoImgGo.AddComponent<AspectRatioFitter>();
+            demoFit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+            demoFit.aspectRatio = 1f;
 
             var card = UIFactory.RoundedPanel("InstrCard", content.transform, UIFactory.PanelColor);
             UIFactory.Size(card, 170, 210);
@@ -402,6 +406,10 @@ namespace KneeRehab.EditorTools
             var raw = legImgGo.AddComponent<RawImage>();
             raw.texture = legRt;
             raw.raycastTarget = false;
+            // Keep the leg render's proportions (don't stretch to the panel shape).
+            var legFit = legImgGo.AddComponent<AspectRatioFitter>();
+            legFit.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+            legFit.aspectRatio = legRt != null ? (float)legRt.width / legRt.height : 0.75f;
 
             // Live graph (bottom ~42%)
             var graphCard = UIFactory.RoundedPanel("GraphCard", right.transform, Color.white);
