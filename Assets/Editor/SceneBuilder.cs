@@ -60,6 +60,9 @@ namespace KneeRehab.EditorTools
             //     the 3D leg can be shown inside a UI panel on the live screen. ---
             var legRenderTexture = BuildLegCamera(kneeModel.gameObject);
 
+            // --- Human demo model + its own camera/RenderTexture (instruction screen).
+            var (humanDemoRt, humanDemo) = BuildHumanDemo();
+
             // --- EventSystem ---
             CreateEventSystem();
 
@@ -80,7 +83,7 @@ namespace KneeRehab.EditorTools
             // --- Build each screen panel ---
             var dashboard = BuildDashboard(canvas.transform);
             var selection = BuildSelection(canvas.transform, cardPrefab, exercises);
-            var instruction = BuildInstruction(canvas.transform, anglePresetPrefab);
+            var instruction = BuildInstruction(canvas.transform, anglePresetPrefab, humanDemoRt, humanDemo);
             var results = BuildResults(canvas.transform);
             var live = BuildLive(canvas.transform, results.GetComponent<ResultsUI>(), legRenderTexture, anglePresetPrefab);
             var history = BuildHistory(canvas.transform, historyRowPrefab, results.GetComponent<ResultsUI>());
@@ -263,6 +266,88 @@ namespace KneeRehab.EditorTools
         }
 
         // --------------------------------------------------------------------
+        // Human demo model + camera (instruction-screen reference animation)
+        // --------------------------------------------------------------------
+        private static (RenderTexture, KneeRehab.Visualization.HumanDemoController) BuildHumanDemo()
+        {
+            // Root placed far from the UI/leg so its camera sees only the demo figure.
+            var root = new GameObject("HumanDemoRoot");
+            root.transform.position = new Vector3(200f, 0f, 0f);
+
+            // --- Placeholder "person" stand-in (replace with a Mixamo character) ---
+            // A clearly human-ish silhouette from primitives, with a simple knee-brace
+            // cuff on one leg, so the panel is not empty before you import a character.
+            var figure = new GameObject("PlaceholderFigure");
+            figure.transform.SetParent(root.transform, false);
+
+            MakePart(figure.transform, PrimitiveType.Capsule, "Torso",
+                new Vector3(0, 1.15f, 0), new Vector3(0.5f, 0.45f, 0.3f), new Color(0.30f, 0.45f, 0.62f));
+            MakePart(figure.transform, PrimitiveType.Sphere, "Head",
+                new Vector3(0, 1.70f, 0), new Vector3(0.28f, 0.28f, 0.28f), new Color(0.85f, 0.72f, 0.60f));
+            // Legs
+            MakePart(figure.transform, PrimitiveType.Capsule, "LegL",
+                new Vector3(-0.14f, 0.45f, 0), new Vector3(0.18f, 0.5f, 0.18f), new Color(0.25f, 0.32f, 0.45f));
+            MakePart(figure.transform, PrimitiveType.Capsule, "LegR",
+                new Vector3(0.14f, 0.45f, 0), new Vector3(0.18f, 0.5f, 0.18f), new Color(0.25f, 0.32f, 0.45f));
+            // Knee brace cuff on the right leg
+            MakePart(figure.transform, PrimitiveType.Cylinder, "BraceCuff",
+                new Vector3(0.14f, 0.55f, 0.02f), new Vector3(0.24f, 0.12f, 0.24f), new Color(0.90f, 0.55f, 0.20f));
+            // Arms
+            MakePart(figure.transform, PrimitiveType.Capsule, "ArmL",
+                new Vector3(-0.42f, 1.15f, 0), new Vector3(0.12f, 0.35f, 0.12f), new Color(0.30f, 0.45f, 0.62f));
+            MakePart(figure.transform, PrimitiveType.Capsule, "ArmR",
+                new Vector3(0.42f, 1.15f, 0), new Vector3(0.12f, 0.35f, 0.12f), new Color(0.30f, 0.45f, 0.62f));
+
+            // Animator so you can later assign a Humanoid controller with demo clips.
+            var animator = root.AddComponent<Animator>();
+
+            var controller = root.AddComponent<KneeRehab.Visualization.HumanDemoController>();
+            controller.animator = animator;
+
+            // Camera -> RenderTexture
+            System.IO.Directory.CreateDirectory("Assets/Settings");
+            var rtPath = "Assets/Settings/HumanDemoRenderTexture.renderTexture";
+            var rt = AssetDatabase.LoadAssetAtPath<RenderTexture>(rtPath);
+            if (rt == null)
+            {
+                rt = new RenderTexture(600, 760, 24, RenderTextureFormat.ARGB32)
+                { name = "HumanDemoRenderTexture", antiAliasing = 2 };
+                AssetDatabase.CreateAsset(rt, rtPath);
+                AssetDatabase.SaveAssets();
+            }
+
+            var camGo = new GameObject("HumanDemoCamera");
+            var cam = camGo.AddComponent<Camera>();
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0.93f, 0.96f, 0.99f, 1f);
+            cam.fieldOfView = 40f;
+            cam.targetTexture = rt;
+            var focus = root.transform.position + new Vector3(0f, 0.9f, 0f);
+            camGo.transform.position = root.transform.position + new Vector3(0f, 1.0f, -4.6f);
+            camGo.transform.LookAt(focus);
+
+            var lightGo = new GameObject("HumanDemoLight");
+            var l = lightGo.AddComponent<Light>();
+            l.type = LightType.Directional;
+            l.intensity = 1.2f;
+            lightGo.transform.position = root.transform.position;
+            lightGo.transform.rotation = Quaternion.Euler(45f, 25f, 0f);
+
+            return (rt, controller);
+        }
+
+        private static void MakePart(Transform parent, PrimitiveType type, string name,
+            Vector3 localPos, Vector3 scale, Color color)
+        {
+            var go = GameObject.CreatePrimitive(type);
+            go.name = name;
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPos;
+            go.transform.localScale = scale;
+            TintPrimitive(go, color);
+        }
+
+        // --------------------------------------------------------------------
         // Exercise assets (all four)
         // --------------------------------------------------------------------
         private static ExerciseData[] LoadOrCreateExercises()
@@ -278,16 +363,8 @@ namespace KneeRehab.EditorTools
                     "Slowly extend your knee until your leg is nearly straight.\n" +
                     "Hold the position briefly.\n" +
                     "Slowly return your leg to the starting position.",
-                    reps: 10, startAngle: 90f, targetAngle: 15f, secsPerRep: 4f),
-
-                MakeExercise("StandingKneeFlexion", "Standing Knee Flexion",
-                    ExerciseType.StandingKneeFlexion, ExerciseDifficulty.Moderate,
-                    "Bend the knee while standing to improve flexion range and control.",
-                    "Stand tall, holding a stable surface for balance.\n" +
-                    "Slowly bend your knee, raising your heel toward your buttock.\n" +
-                    "Hold briefly at the top of the movement.\n" +
-                    "Slowly lower your foot back to the floor.",
-                    reps: 10, startAngle: 15f, targetAngle: 90f, secsPerRep: 4f),
+                    reps: 10, startAngle: 90f, targetAngle: 15f, secsPerRep: 4f,
+                    demoClip: "SeatedKneeExtension"),
 
                 MakeExercise("SitToStand", "Sit-to-Stand",
                     ExerciseType.SitToStand, ExerciseDifficulty.Challenging,
@@ -296,16 +373,28 @@ namespace KneeRehab.EditorTools
                     "Lean slightly forward and stand up smoothly.\n" +
                     "Pause when fully upright.\n" +
                     "Lower yourself back down with control.",
-                    reps: 8, startAngle: 90f, targetAngle: 15f, secsPerRep: 5f),
+                    reps: 8, startAngle: 90f, targetAngle: 15f, secsPerRep: 5f,
+                    demoClip: "SitToStand"),
 
-                MakeExercise("StraightLegRaise", "Straight Leg Raise",
-                    ExerciseType.StraightLegRaise, ExerciseDifficulty.Moderate,
-                    "Raise a straight leg to strengthen the muscles around the knee.",
-                    "Lie or sit with the leg straight out in front of you.\n" +
-                    "Keeping the knee straight, raise the whole leg a short distance.\n" +
-                    "Hold briefly at the top.\n" +
-                    "Slowly lower the leg back down.",
-                    reps: 10, startAngle: 15f, targetAngle: 60f, secsPerRep: 4f),
+                MakeExercise("Squat", "Squat",
+                    ExerciseType.Squat, ExerciseDifficulty.Challenging,
+                    "Bend both knees to lower into a squat, then rise back up.",
+                    "Stand tall with feet shoulder-width apart.\n" +
+                    "Bend your knees and hips to lower down, keeping your back straight.\n" +
+                    "Lower until your knees are comfortably bent.\n" +
+                    "Push through your feet to stand back up.",
+                    reps: 8, startAngle: 15f, targetAngle: 90f, secsPerRep: 5f,
+                    demoClip: "Squat"),
+
+                MakeExercise("Lunge", "Lunge",
+                    ExerciseType.Lunge, ExerciseDifficulty.Challenging,
+                    "Step forward and bend the front knee, then return to standing.",
+                    "Stand tall, hands on hips or holding support.\n" +
+                    "Step one foot forward and bend the front knee to lower down.\n" +
+                    "Keep the front knee over the ankle.\n" +
+                    "Push back up to the starting standing position.",
+                    reps: 8, startAngle: 15f, targetAngle: 75f, secsPerRep: 5f,
+                    demoClip: "Lunge"),
             };
 
             return list.ToArray();
@@ -313,7 +402,7 @@ namespace KneeRehab.EditorTools
 
         private static ExerciseData MakeExercise(string fileName, string name, ExerciseType type,
             ExerciseDifficulty difficulty, string shortDesc, string instructions,
-            int reps, float startAngle, float targetAngle, float secsPerRep)
+            int reps, float startAngle, float targetAngle, float secsPerRep, string demoClip = "")
         {
             string path = $"Assets/ScriptableObjects/{fileName}.asset";
             var existing = AssetDatabase.LoadAssetAtPath<ExerciseData>(path);
@@ -325,6 +414,7 @@ namespace KneeRehab.EditorTools
             ex.difficulty = difficulty;
             ex.shortDescription = shortDesc;
             ex.instructions = instructions;
+            ex.demoClipName = demoClip;
             ex.targetRepetitions = reps;
             // targetMaximumAngle = the "rest/start" (bent) extreme; targetMinimumAngle
             // = the goal extreme. We store the user-facing start/target into these.
@@ -356,7 +446,7 @@ namespace KneeRehab.EditorTools
         // Implemented in SceneBuilderScreens.cs
         internal static GameObject BuildDashboard(Transform p) => SceneBuilderScreens.BuildDashboard(p);
         internal static GameObject BuildSelection(Transform p, ExerciseCard card, ExerciseData[] ex) => SceneBuilderScreens.BuildSelection(p, card, ex);
-        internal static GameObject BuildInstruction(Transform p, Button anglePrefab) => SceneBuilderScreens.BuildInstruction(p, anglePrefab);
+        internal static GameObject BuildInstruction(Transform p, Button anglePrefab, RenderTexture demoRt, HumanDemoController demo) => SceneBuilderScreens.BuildInstruction(p, anglePrefab, demoRt, demo);
         internal static GameObject BuildLive(Transform p, ResultsUI r, RenderTexture legRt, Button anglePrefab) => SceneBuilderScreens.BuildLive(p, r, legRt, anglePrefab);
         internal static GameObject BuildResults(Transform p) => SceneBuilderScreens.BuildResults(p);
         internal static GameObject BuildHistory(Transform p, HistoryRow row, ResultsUI r) => SceneBuilderScreens.BuildHistory(p, row, r);

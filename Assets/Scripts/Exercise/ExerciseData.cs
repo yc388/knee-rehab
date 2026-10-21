@@ -14,7 +14,9 @@ namespace KneeRehab.ExerciseSystem
         SeatedKneeExtension, // start flexed -> extend -> return
         StandingKneeFlexion, // start straight -> flex -> return
         SitToStand,
-        StraightLegRaise
+        StraightLegRaise,
+        Squat,               // stand -> bend knees -> stand
+        Lunge                // stand -> step/bend -> return
     }
 
     /// <summary>
@@ -35,6 +37,11 @@ namespace KneeRehab.ExerciseSystem
 
         [Tooltip("Optional card icon / illustration. Leave empty to use a placeholder.")]
         public Sprite icon;
+
+        [Tooltip("Name of the looping demo animation state to play on the human model " +
+                 "for this exercise (see HumanDemoController). Leave empty to use the " +
+                 "controller's default state.")]
+        public string demoClipName = "";
 
         [Header("Patient-facing copy")]
         [TextArea(2, 4)]

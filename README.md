@@ -144,3 +144,39 @@ IKneeSensorProvider  (interface, the single seam)
   with a real mesh and just reassign `lowerLeg` on `KneeModelController`.
 - `NetworkKneeSensorProvider` connects as a stub (no real socket yet) so the UI flow
   can be tested in Network mode; implement the TODOs to stream real data.
+
+---
+
+## Exercises (current set)
+Seated Knee Extension · Sit-to-Stand · **Squat** · **Lunge**.
+(Standing Knee Flexion and Straight Leg Raise were replaced by Squat and Lunge.)
+
+> After pulling changes that alter exercise defaults, delete the old assets in
+> `Assets/ScriptableObjects/` and re-run **Tools ▸ Knee Rehab ▸ Build Prototype Scene**
+> so the assets regenerate with the new values.
+
+## Human demo animation (instruction screen)
+The instruction screen shows a looping "how to do this exercise" figure rendered by a
+dedicated camera (`HumanDemoCamera` → `HumanDemoRenderTexture`). Out of the box it shows
+a simple **placeholder figure** (primitive body + an orange knee-brace cuff) so the panel
+isn't empty. This demo is a visual guide only — it is NOT driven by the sensor (the
+sensor-driven model is the leg on the live screen).
+
+### Replace the placeholder with a real character (free, via Mixamo)
+1. At [mixamo.com](https://www.mixamo.com) (free Adobe account): pick a character, then
+   download the animations you want (search e.g. "Squat", "Lunge", "Knee"), each as
+   **FBX for Unity, with skin**.
+2. Import the FBX files into `Assets/Models/`.
+3. Select each model FBX → **Rig** tab → Animation Type = **Humanoid** → Apply.
+4. Select each animation clip → **Animation** tab → tick **Loop Time** → Apply.
+5. Create an **Animator Controller** (right-click ▸ Create ▸ Animator Controller). Add one
+   state per exercise, naming each state to match the exercise's `demoClipName`:
+   `SeatedKneeExtension`, `SitToStand`, `Squat`, `Lunge` (plus an `Idle` default state).
+   Drag the matching clip into each state.
+6. In `Assets/Scenes/Main.unity`, select **HumanDemoRoot**: delete the `PlaceholderFigure`
+   child, drag your character model in as a child, assign the Animator Controller to the
+   root's `Animator`, and make sure the `HumanDemoController.animator` still points at it.
+7. Press Play → open an exercise's instructions → the matching demo loop plays.
+
+If no controller/clips are assigned yet, the app still runs fine (the placeholder figure
+just stands still).

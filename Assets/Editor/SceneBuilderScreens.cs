@@ -178,7 +178,8 @@ namespace KneeRehab.EditorTools
         // ===================================================================
         // INSTRUCTION (with angle pickers)
         // ===================================================================
-        public static GameObject BuildInstruction(Transform parent, Button anglePrefab)
+        public static GameObject BuildInstruction(Transform parent, Button anglePrefab,
+            RenderTexture humanDemoRt, KneeRehab.Visualization.HumanDemoController humanDemo)
         {
             var panel = SceneBuilder.MakeScreenRoot("ExerciseInstruction", parent);
             var area = Header(panel, "Exercise Instructions", out var back, withBack: true);
@@ -203,10 +204,23 @@ namespace KneeRehab.EditorTools
             var ui = panel.AddComponent<ExerciseInstructionUI>();
             ui.backButton = back;
             ui.anglePresetButtonPrefab = anglePrefab;
+            ui.humanDemo = humanDemo;
 
             ui.nameText = UIFactory.Label("Name", content.transform, "Exercise", 32,
                 UIFactory.Text, TextAlignmentOptions.Center, FontStyles.Bold);
             UIFactory.Size(ui.nameText.gameObject, 42, 46);
+
+            // --- Human demo animation (reference guide) ---
+            var demoCard = UIFactory.RoundedPanel("DemoCard", content.transform, Color.white);
+            UIFactory.Size(demoCard, 300, 320);
+            UIFactory.VLayout(demoCard, 4, Pad(14, 10, 14, 10));
+            UIFactory.Label("DemoTitle", demoCard.transform, "Demonstration", 18,
+                UIFactory.TextMuted, TextAlignmentOptions.Center);
+            var demoImgGo = UIFactory.Node("DemoImage", demoCard.transform);
+            UIFactory.Size(demoImgGo, 260, 280);
+            var demoRaw = demoImgGo.AddComponent<RawImage>();
+            demoRaw.texture = humanDemoRt;
+            demoRaw.raycastTarget = false;
 
             var card = UIFactory.RoundedPanel("InstrCard", content.transform, UIFactory.PanelColor);
             UIFactory.Size(card, 170, 210);

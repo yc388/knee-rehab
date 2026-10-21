@@ -33,6 +33,9 @@ namespace KneeRehab.UI
         public Button anglePresetButtonPrefab;
         public TMP_Text angleSummaryText;
 
+        [Header("Human demo")]
+        public KneeRehab.Visualization.HumanDemoController humanDemo;
+
         [Header("Buttons")]
         public Button backButton;
         public Button startButton;
@@ -58,6 +61,7 @@ namespace KneeRehab.UI
         {
             Populate();
             BuildPickers();
+            if (humanDemo != null) humanDemo.PlayForSelectedExercise();
             if (countdownOverlay != null) countdownOverlay.SetActive(false);
         }
 
